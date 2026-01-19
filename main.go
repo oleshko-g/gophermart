@@ -4,11 +4,8 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"fmt"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -204,20 +201,6 @@ func (g *gophermart) run() (err error) {
 
 	runCtx, runCancel := context.WithCancelCause(g.loggingCtx)
 	defer runCancel(nil)
-
-	osSignals := make(chan os.Signal, 1)
-	wg.Go(func() {
-		log.Infof(g.loggingCtx, "in os.Signal goroutine")
-		signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-		select {
-		case sig := <-osSignals:
-			err = fmt.Errorf("recieved OS signal: %s", sig)
-			runCancel(err)
-			return
-		case <-runCtx.Done():
-			return
-		}
-	})
 
 	wg.Go(func() {
 		log.Infof(g.loggingCtx, "in HTTP server")
