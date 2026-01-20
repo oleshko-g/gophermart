@@ -4,7 +4,6 @@ package balance
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"time"
 
 	"github.com/EClaesson/go-luhn"
@@ -188,12 +187,15 @@ func (s *balanceSvc) ProcessAccruals(ctx context.Context) error {
 		case orderID := <-s.accrualOrdersToProcess:
 			log.Debugf(s.loggingCtx, "recieved order ID from accrualOrdersToProcess")
 			go func() {
-				err := s.processAccrual(ctx, orderID)
+				ctxProccessAccrual, cancel := context.WithCancelCause(ctx)
+				defer cancel(nil)
+
+				err := s.processAccrual(ctxProccessAccrual, orderID)
 				if err != nil {
+					cancel(err)
 					log.Errorf(s.loggingCtx, err, "error in processing of order ID: [%s]", orderID)
 					s.accrualOrdersToProcess <- orderID
 					log.Debugf(s.loggingCtx, "put order ID back to accrualOrdersToProcess")
-					errCh <- err
 				}
 			}()
 		case <-ctx.Done():
@@ -219,24 +221,22 @@ func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
 }
 
 func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) error {
+	log.Info(s.loggingCtx, log.KV{K: "msg", V: "in procceeAccrual."}, log.KV{K: "orderID", V: orderID})
 	// start storate transaction
 	storageTx, err := s.Balance.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		err := storageTx.Tx.Rollback()
-		if err != nil {
-			slog.Error(err.Error())
-		}
-	}()
+	log.Debugf(s.loggingCtx, "began storage transaction")
 
 	order, err := storageTx.RetrieveOrderForAccrual(ctx, orderID)
 	if err != nil {
 		return err
 	}
+	log.Debugf(s.loggingCtx, "retrieved order")
 
 	if order.Status == OrderStatusProcessed || order.Status == OrderStatusInvalid {
+		log.Warn(s.loggingCtx, log.KV{K: "msg", V: "return: order is in terminal status."}, log.KV{K: "status", V: order.Status})
 		return nil
 	}
 
@@ -244,16 +244,20 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 	if err != nil {
 		return err
 	}
+	log.Debug(s.loggingCtx, log.KV{K: "msg", V: "fetched order"}, log.KV{K: "result", V: res})
 
 	if res == nil {
+		log.Warnf(s.loggingCtx, "return: accrual result is nil.")
 		return nil
 	}
 
 	if res.Status == transport.OrderAccrualStatusProcessed && res.Accrual != nil {
-		err := s.StoreUserAccrual(ctx, order.ID, order.UserID, int32(*res.Accrual*100))
+		amount := int32(*res.Accrual * 100)
+		err := s.StoreUserAccrual(ctx, order.ID, order.UserID, amount)
 		if err != nil {
 			return err
 		}
+		log.Debug(s.loggingCtx, log.KV{K: "msg", V: "stored accrual"}, log.KV{K: "amount", V: amount})
 	}
 
 	orderStatus, err := accrualStatusToOrderStatus(res.Status)
@@ -265,11 +269,13 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 	if err != nil {
 		return err
 	}
+	log.Debug(s.loggingCtx, log.KV{K: "msg", V: "updated order status"}, log.KV{K: "orderStatus", V: orderStatus})
 
 	err = storageTx.Tx.Commit()
 	if err != nil {
 		return err
 	}
+	log.Debugf(s.loggingCtx, "commited storage transaction")
 
 	return nil
 }
