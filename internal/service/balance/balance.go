@@ -236,7 +236,9 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 	log.Debugf(s.loggingCtx, "retrieved order")
 
 	if order.Status == OrderStatusProcessed || order.Status == OrderStatusInvalid {
-		log.Warn(s.loggingCtx, log.KV{K: "msg", V: "return: order is in terminal status."}, log.KV{K: "status", V: order.Status})
+		log.Warn(s.loggingCtx,
+			log.KV{K: "msg", V: "return: order is in terminal status."},
+			log.KV{K: "status", V: order.Status})
 		return nil
 	}
 

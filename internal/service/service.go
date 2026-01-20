@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	_ "github.com/oleshko-g/oggophermart/internal/gen/accrual"
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
 )

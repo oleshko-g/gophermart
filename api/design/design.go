@@ -296,71 +296,6 @@ var _ = Service("balance", func() {
 	})
 })
 
-// INFO: Accrual
-var _ = Service("accrual", func() {
-	Method("GetOrderAccrual", func() {
-
-		Payload(func() {
-			Attribute("number", OrderNumber)
-			Required("number")
-		})
-
-		Result(func() {
-			Attribute("order", OrderNumber)
-			Attribute("status", String, func() {
-				Enum("REGISTERED", "INVALID", "PROCESSING", "PROCESSED")
-			})
-			Attribute("accrual", Float64, func() {
-				ExclusiveMinimum(0)
-			})
-
-			Required("order", "status")
-			Example(func() {
-				Value(Val{
-					"order":   "42",
-					"status":  "PROCESSED",
-					"accrual": 500.1,
-				})
-				Value(Val{
-					"order":  "32",
-					"status": "INVALID",
-				})
-				Value(Val{
-					"order":  "2",
-					"status": "PROCESSING",
-				})
-				Value(Val{
-					"order":  "4",
-					"status": "REGISTERED",
-				})
-			})
-		})
-
-		Error("Internal service error", AccrualErrorType)
-		Error("The request rate limit has been exceeded", AccrualErrorType, func() {
-			Required("name", "retryAfter", "message")
-		})
-
-		HTTP(func() {
-			GET("/orders/{number}")
-			Param("number", String)
-			Response(StatusOK)
-			Response(StatusNoContent, func() {
-				Body(Empty)
-			})
-			Response("The request rate limit has been exceeded", StatusTooManyRequests, func() {
-				Description("The request rate limit has been exceeded")
-				Header("retryAfter:Retry-After")
-				ContentType("text/plain")
-			})
-			Response("Internal service error", StatusInternalServerError, func() {
-				Body(Empty)
-			})
-		})
-
-	})
-})
-
 var UploadUserOrderResult = Type("PostOrderResult", func() {
 	Attribute("accepted", func() {
 		Meta("struct:tag:json", "-")
@@ -368,8 +303,6 @@ var UploadUserOrderResult = Type("PostOrderResult", func() {
 		Meta("openapi:example", "false")
 	})
 	Meta("openapi:example", "false")
-})
-var GetOrderResult = Type("GetOrderResult", func() {
 })
 
 var LoginPassword = Type("LoginPassword", func() {
@@ -429,25 +362,4 @@ var Order = Type("Order", func() {
 var OrderNumber = Type("OrderNumber", String, func() {
 	Description("Unique user order number")
 	Pattern("[1-9][0-9]*")
-})
-
-var AccrualErrorType = Type("AccrualError", func() {
-	ErrorName("name", func() {
-		Description("identifier to map an error to HTTP status codes")
-		Meta("struct:tag:json", "-")
-		Meta("openapi:generate", "false")
-		Meta("openapi:example", "false")
-	})
-
-	Attribute("retryAfter", Int, func() {
-		ExclusiveMinimum(0)
-	})
-
-	Attribute("message", String)
-
-	Meta("openapi:generate", "false")
-	Meta("openapi:example", "false")
-	Meta("struct:pkg:path", "service")
-
-	Required("name")
 })

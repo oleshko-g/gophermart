@@ -50,7 +50,6 @@ func newLoggingCtx() context.Context {
 	opts := []log.LogOption{
 		log.WithFormat(log.FormatTerminal),
 		log.WithDebug(),
-		log.WithFileLocation(),
 	}
 
 	// puts logger in ctx

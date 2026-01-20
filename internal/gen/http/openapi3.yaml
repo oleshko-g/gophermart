@@ -6,52 +6,6 @@ servers:
     - url: http://localhost:80
       description: Default server for gophermart
 paths:
-    /api/orders/{number}:
-        get:
-            tags:
-                - accrual
-            summary: GetOrderAccrual accrual
-            operationId: accrual#GetOrderAccrual
-            parameters:
-                - name: number
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-                    description: Unique user order number
-                    example: "9"
-                    pattern: '[1-9][0-9]*'
-                  example: "234"
-            responses:
-                "200":
-                    description: OK response.
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/GetOrderAccrualOKResponseBody'
-                            example:
-                                order: "4"
-                                status: REGISTERED
-                "204":
-                    description: No Content response.
-                "429":
-                    description: 'The request rate limit has been exceeded: The request rate limit has been exceeded'
-                    headers:
-                        Retry-After:
-                            schema:
-                                type: integer
-                                example: 4713163988026403398
-                                format: int64
-                                exclusiveMinimum: 0
-                            example: 5205344737650768963
-                    content:
-                        text/plain:
-                            schema:
-                                $ref: '#/components/schemas/AccrualError2'
-                            example:
-                                message: Est qui accusamus.
-                "500":
-                    description: 'Internal service error: Internal Server Error response.'
     /api/user/balance:
         get:
             tags:
@@ -77,8 +31,8 @@ paths:
                             schema:
                                 type: boolean
                                 description: Is the error a server-side fault?
-                                example: false
-                            example: false
+                                example: true
+                            example: true
                         goa-attribute-id:
                             description: ID is a unique identifier for this particular occurrence of the problem.
                             schema:
@@ -106,13 +60,13 @@ paths:
                                 type: boolean
                                 description: Is the error temporary?
                                 example: false
-                            example: false
+                            example: true
                         goa-attribute-timeout:
                             description: Is the error a timeout?
                             schema:
                                 type: boolean
                                 description: Is the error a timeout?
-                                example: false
+                                example: true
                             example: true
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
@@ -173,14 +127,14 @@ paths:
                                 type: boolean
                                 description: Is the error temporary?
                                 example: true
-                            example: false
+                            example: true
                         goa-attribute-timeout:
                             description: Is the error a timeout?
                             schema:
                                 type: boolean
                                 description: Is the error a timeout?
-                                example: false
-                            example: true
+                                example: true
+                            example: false
                 "402":
                     description: 'Insufficient funds: Insufficient funds'
                 "422":
@@ -270,7 +224,7 @@ paths:
                                 type: boolean
                                 description: Is the error a server-side fault?
                                 example: false
-                            example: false
+                            example: true
                         goa-attribute-id:
                             description: ID is a unique identifier for this particular occurrence of the problem.
                             schema:
@@ -298,14 +252,14 @@ paths:
                                 type: boolean
                                 description: Is the error temporary?
                                 example: false
-                            example: false
+                            example: true
                         goa-attribute-timeout:
                             description: Is the error a timeout?
                             schema:
                                 type: boolean
                                 description: Is the error a timeout?
                                 example: true
-                            example: false
+                            example: true
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
             security:
@@ -342,7 +296,7 @@ paths:
                             schema:
                                 type: boolean
                                 description: Is the error a server-side fault?
-                                example: true
+                                example: false
                             example: false
                         goa-attribute-id:
                             description: ID is a unique identifier for this particular occurrence of the problem.
@@ -371,14 +325,14 @@ paths:
                                 type: boolean
                                 description: Is the error temporary?
                                 example: false
-                            example: true
+                            example: false
                         goa-attribute-timeout:
                             description: Is the error a timeout?
                             schema:
                                 type: boolean
                                 description: Is the error a timeout?
-                                example: false
-                            example: false
+                                example: true
+                            example: true
                 "409":
                     description: 'The order belongs to another user: The order belongs to another user'
                 "422":
@@ -421,70 +375,17 @@ paths:
                     description: 'Internal service error: Internal Server Error response.'
 components:
     schemas:
-        AccrualError:
-            type: object
-            properties:
-                message:
-                    type: string
-                    example: Soluta dignissimos ipsa.
-                retryAfter:
-                    type: integer
-                    example: 8718001642331155758
-                    format: int64
-                    exclusiveMinimum: 0
-            required:
-                - retryAfter
-                - message
-        AccrualError2:
-            type: object
-            properties:
-                message:
-                    type: string
-                    example: Voluptatibus laudantium ut eum.
-            example:
-                message: Laudantium dolorem.
-            required:
-                - message
-        GetOrderAccrualOKResponseBody:
-            type: object
-            properties:
-                accrual:
-                    type: number
-                    example: 0.8158778328797043
-                    format: double
-                    exclusiveMinimum: 0
-                order:
-                    type: string
-                    example: "9"
-                    pattern: '[1-9][0-9]*'
-                status:
-                    type: string
-                    example: PROCESSED
-                    enum:
-                        - REGISTERED
-                        - INVALID
-                        - PROCESSING
-                        - PROCESSED
-            example:
-                order: "4"
-                status: REGISTERED
-            required:
-                - order
-                - status
-        GetOrderResult:
-            type: object
-            example: {}
         GetUserBalanceResponseBody:
             type: object
             properties:
                 current:
                     type: number
-                    example: 0.72057620477551
+                    example: 0.32899396434174705
                     format: double
                     minimum: 0
                 withdrawn:
                     type: number
-                    example: 0.7822559545972244
+                    example: 0.4871256396488767
                     format: double
                     minimum: 0
             example:
@@ -511,10 +412,10 @@ components:
             properties:
                 login:
                     type: string
-                    example: Et id ad distinctio magnam sint odit.
+                    example: Consequatur molestias hic.
                 password:
                     type: string
-                    example: Iure dolor.
+                    example: Ea id voluptate et et maxime.
             example:
                 login: <login>
                 password: <password>
@@ -526,15 +427,15 @@ components:
             properties:
                 accrual:
                     type: integer
-                    example: 11239546530167864484
+                    example: 839832540227140899
                     format: int64
                 number:
                     type: string
-                    example: "8"
+                    example: "470"
                     pattern: '[1-9][0-9]*'
                 status:
                     type: string
-                    example: INVALID
+                    example: PROCESSED
                     enum:
                         - NEW
                         - PROCESSING
@@ -542,13 +443,13 @@ components:
                         - PROCESSED
                 uploaded_at:
                     type: string
-                    example: "1979-04-17T14:15:56Z"
+                    example: "2011-09-13T15:10:59Z"
                     format: date-time
             example:
-                accrual: 17293147444294344261
-                number: "82"
+                accrual: 16275879363951163113
+                number: "5"
                 status: PROCESSING
-                uploaded_at: "1995-08-08T15:28:45Z"
+                uploaded_at: "2014-07-08T07:33:40Z"
             required:
                 - number
                 - status
@@ -560,11 +461,11 @@ components:
             properties:
                 order:
                     type: string
-                    example: "368"
+                    example: "107"
                     pattern: '[1-9][0-9]*'
                 sum:
                     type: number
-                    example: 0.9580295743554528
+                    example: 0.941405969468644
                     format: double
                     exclusiveMinimum: 0
             example:
@@ -581,4 +482,3 @@ components:
 tags:
     - name: balance
     - name: user
-    - name: accrual

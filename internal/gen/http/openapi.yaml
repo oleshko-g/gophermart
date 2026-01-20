@@ -12,43 +12,6 @@ produces:
     - application/xml
     - application/gob
 paths:
-    /orders/{number}:
-        get:
-            tags:
-                - accrual
-            summary: GetOrderAccrual accrual
-            operationId: accrual#GetOrderAccrual
-            parameters:
-                - name: number
-                  in: path
-                  description: Unique user order number
-                  required: true
-                  type: string
-            responses:
-                "200":
-                    description: OK response.
-                    schema:
-                        $ref: '#/definitions/AccrualGetOrderAccrualOKResponseBody'
-                        required:
-                            - order
-                            - status
-                "204":
-                    description: No Content response.
-                "429":
-                    description: The request rate limit has been exceeded
-                    schema:
-                        $ref: '#/definitions/AccrualError'
-                        required:
-                            - message
-                    headers:
-                        Retry-After:
-                            type: int
-                            minimum: 0
-                            exclusiveMinimum: true
-                "500":
-                    description: Internal Server Error response.
-            schemes:
-                - http
     /user/balance:
         get:
             tags:
@@ -318,56 +281,18 @@ paths:
             schemes:
                 - http
 definitions:
-    AccrualError:
-        title: AccrualError
-        type: object
-        properties:
-            message:
-                type: string
-                example: Repellat temporibus sit consequatur.
-        example:
-            message: Assumenda ratione sit asperiores consequuntur earum.
-        required:
-            - message
-    AccrualGetOrderAccrualOKResponseBody:
-        title: AccrualGetOrderAccrualOKResponseBody
-        type: object
-        properties:
-            accrual:
-                type: number
-                example: 0.2311765057275559
-                format: double
-                exclusiveMinimum: 0
-            order:
-                type: string
-                example: "63"
-                pattern: '[1-9][0-9]*'
-            status:
-                type: string
-                example: PROCESSED
-                enum:
-                    - REGISTERED
-                    - INVALID
-                    - PROCESSING
-                    - PROCESSED
-        example:
-            order: "4"
-            status: REGISTERED
-        required:
-            - order
-            - status
     BalanceGetUserBalanceResponseBody:
         title: BalanceGetUserBalanceResponseBody
         type: object
         properties:
             current:
                 type: number
-                example: 0.17393165634984303
+                example: 0.6906347392081525
                 format: double
                 minimum: 0
             withdrawn:
                 type: number
-                example: 0.33680348811088484
+                example: 0.45893423780644904
                 format: double
                 minimum: 0
         example:
@@ -382,11 +307,11 @@ definitions:
         properties:
             order:
                 type: string
-                example: "886"
+                example: "21"
                 pattern: '[1-9][0-9]*'
             sum:
                 type: number
-                example: 0.3539816693068508
+                example: 0.16815006795855683
                 format: double
                 exclusiveMinimum: 0
         example:
@@ -405,10 +330,10 @@ definitions:
         properties:
             login:
                 type: string
-                example: Ea id voluptate et et maxime.
+                example: Aut recusandae laboriosam.
             password:
                 type: string
-                example: Qui accusamus aperiam rem amet enim magnam.
+                example: Alias tempora neque iure quibusdam necessitatibus mollitia.
         example:
             login: <login>
             password: <password>
@@ -421,11 +346,11 @@ definitions:
         properties:
             accrual:
                 type: integer
-                example: 13776325716155642653
+                example: 12502698392339350606
                 format: int64
             number:
                 type: string
-                example: "5"
+                example: "664"
                 pattern: '[1-9][0-9]*'
             status:
                 type: string
@@ -437,13 +362,13 @@ definitions:
                     - PROCESSED
             uploaded_at:
                 type: string
-                example: "1992-05-31T08:51:44Z"
+                example: "2013-10-10T20:18:25Z"
                 format: date-time
         example:
-            accrual: 16060451496832791997
-            number: "930"
-            status: PROCESSED
-            uploaded_at: "1981-11-13T01:47:34Z"
+            accrual: 15339435055665327048
+            number: "51"
+            status: PROCESSING
+            uploaded_at: "1995-09-20T18:24:58Z"
         required:
             - number
             - status
