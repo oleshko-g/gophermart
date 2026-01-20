@@ -168,6 +168,7 @@ func (s *balanceSvc) WithdrawUserBalance(context.Context, *genBalance.WithdrawUs
 
 func (s *balanceSvc) ProcessAccruals(ctx context.Context) error {
 	log.Debugf(s.loggingCtx, "in ProcessAccruals")
+	errCh := make(chan error, 1)
 	s.accrualOrdersToProcess = make(chan uuid.UUID)
 
 	orderIDs, err := s.RetrieveOrderIDsForAccrual(ctx)
@@ -175,13 +176,13 @@ func (s *balanceSvc) ProcessAccruals(ctx context.Context) error {
 		return err
 	}
 	log.Debugf(s.loggingCtx, "retrieved %d order IDs for Accrual", len(orderIDs))
-	err = s.sendAccrualOrdersToProcess(orderIDs)
-	if err != nil {
-		log.Debugf(s.loggingCtx, "retrieved %d order IDs for Accrual", len(orderIDs))
-		return err
-	}
+	go func() {
+		err = s.sendAccrualOrdersToProcess(orderIDs)
+		if err != nil {
+			errCh <- err
+		}
+	}()
 
-	errCh := make(chan error, 1)
 	for {
 		select {
 		case orderID := <-s.accrualOrdersToProcess:
