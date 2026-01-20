@@ -181,7 +181,7 @@ func (g *gophermart) setup() (err error) {
 	g.transport.http.client.accrual = accrualHTTP.NewClient("http", g.transport.http.AccrualAddress().Host+":"+g.transport.http.AccrualAddress().Port)
 	g.Service = service.Service{
 		User:    userSvc,
-		Balance: balance.New(g.Storage.Balance, userSvc, g.transport.http.client.accrual),
+		Balance: balance.New(g.loggingCtx, g.Storage.Balance, userSvc, g.transport.http.client.accrual),
 	}
 
 	// 3. Instanciates the HTTP server

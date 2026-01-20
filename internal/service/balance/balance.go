@@ -15,11 +15,13 @@ import (
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
 	"github.com/oleshko-g/oggophermart/internal/transport"
+	"goa.design/clue/log"
 )
 
 type balanceSvc struct {
 	storage.Balance
 	service.Auther
+	loggingCtx             context.Context
 	accrual                transport.Accrual
 	accrualOrdersToProcess chan uuid.UUID
 }
@@ -28,8 +30,10 @@ var _ genBalance.Service = (*balanceSvc)(nil)
 var _ genBalance.Auther = (*balanceSvc)(nil)
 
 // New returns the balance service implementation.
-func New(storage storage.Balance, auther service.Auther, accrual transport.Accrual) *balanceSvc {
+func New(loggingCtx context.Context, storage storage.Balance, auther service.Auther, accrual transport.Accrual) *balanceSvc {
+	log.MustContainLogger(loggingCtx)
 	return &balanceSvc{
+		loggingCtx:             loggingCtx,
 		Balance:                storage,
 		Auther:                 auther,
 		accrualOrdersToProcess: make(chan uuid.UUID),
@@ -163,14 +167,17 @@ func (s *balanceSvc) WithdrawUserBalance(context.Context, *genBalance.WithdrawUs
 }
 
 func (s *balanceSvc) ProcessAccruals(ctx context.Context) error {
+	log.Debugf(s.loggingCtx, "in ProcessAccruals")
 	s.accrualOrdersToProcess = make(chan uuid.UUID)
 
 	orderIDs, err := s.RetrieveOrderIDsForAccrual(ctx)
 	if err != nil {
 		return err
 	}
+	log.Debugf(s.loggingCtx, "retrieved %d order IDs for Accrual", len(orderIDs))
 	err = s.sendAccrualOrdersToProcess(orderIDs)
 	if err != nil {
+		log.Debugf(s.loggingCtx, "retrieved %d order IDs for Accrual", len(orderIDs))
 		return err
 	}
 
@@ -178,18 +185,21 @@ func (s *balanceSvc) ProcessAccruals(ctx context.Context) error {
 	for {
 		select {
 		case orderID := <-s.accrualOrdersToProcess:
+			log.Debugf(s.loggingCtx, "recieved order ID from accrualOrdersToProcess")
 			go func() {
 				err := s.processAccrual(ctx, orderID)
 				if err != nil {
+					log.Errorf(s.loggingCtx, err, "error in processing of order ID: [%s]", orderID)
 					s.accrualOrdersToProcess <- orderID
+					log.Debugf(s.loggingCtx, "put order ID back to accrualOrdersToProcess")
 					errCh <- err
 				}
 			}()
 		case <-ctx.Done():
+			log.Printf(s.loggingCtx, "recieved ctx.Done. Cause: %s", context.Cause(ctx))
 			return context.Cause(ctx)
 		case err := <-errCh:
-			slog.Error(err.Error())
-			// TODO: log err through loggingCtx
+			log.Errorf(s.loggingCtx, err, "error from errCh")
 		}
 	}
 
