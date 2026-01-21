@@ -207,7 +207,7 @@ func (s *Storage) RetrieveOrderForAccrual(ctx context.Context, orderID uuid.UUID
 
 	order, err := s.queries.SelectOrder(ctx, orderID)
 	if err != nil {
-		return storage.Order{}, nil
+		return storage.Order{}, err
 	}
 
 	return order, nil
@@ -249,7 +249,11 @@ type Tx struct {
 
 // BeginTx is the implementation of [storage.Transacter]. It wraps [database/sql.BeginTx]
 func (s *Storage) BeginTx(ctx context.Context) (*storage.Tx, error) {
-	tx, _ := s.db.BeginTx(ctx, nil)
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	sTx := &Storage{
 		queries: s.queries.WithTx(tx),
 	}

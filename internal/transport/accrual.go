@@ -1,6 +1,8 @@
 package transport
 
-import "context"
+import (
+	"context"
+)
 
 // Accrual is the interface to accrual system
 type Accrual interface {
