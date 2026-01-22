@@ -5,6 +5,8 @@ import (
 )
 
 // Accrual is the interface to accrual system
+//
+//go:generate moq -pkg moqAccrual -out ../gen/transport/moq/accrual/accrual.go . Accrual
 type Accrual interface {
 	// FetchOrderAccrual method
 	FetchOrderAccrual(ctx context.Context, payload FetchOrderAccrualPayload) (*FetchOrderAccrualResult, error)

@@ -10,6 +10,8 @@ import (
 	_ "github.com/oleshko-g/oggophermart/internal/storage"
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
 	"github.com/oleshko-g/oggophermart/internal/storage/db/sql"
+	moqAccrual "github.com/oleshko-g/oggophermart/internal/gen/transport/moq/accrual"
+
 )
 
 var (
@@ -23,7 +25,7 @@ func TestMain(m *testing.M) {
 		log.Fatal(err)
 	}
 
-	svc = New(oglog.NewLoggingCtx(), storage, nil, nil)
+	svc = New(oglog.NewLoggingCtx(), storage, nil, &moqAccrual.AccrualMock{})
 }
 
 func Test_processAccrual(t *testing.T) {
