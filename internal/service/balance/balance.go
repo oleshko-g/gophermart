@@ -293,6 +293,7 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 	if err != nil {
 		return err
 	}
+	log.Debug(loggingCtx, log.KV{K: "msg", V: "convertedAccrualStatus to Order status"}, log.KV{K: "accrualStatus", V: res.Status}, log.KV{K: "accrualStatus", V: orderStatus})
 
 	err = storageTx.UpdateOrderStatus(ctx, orderID, orderStatus)
 	if err != nil {
