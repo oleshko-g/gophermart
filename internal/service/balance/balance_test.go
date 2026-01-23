@@ -8,27 +8,22 @@ import (
 	"github.com/google/uuid"
 	moqAccrual "github.com/oleshko-g/oggophermart/internal/gen/transport/moq/accrual"
 	"github.com/oleshko-g/oggophermart/internal/oglog"
-	_ "github.com/oleshko-g/oggophermart/internal/storage"
+	"github.com/oleshko-g/oggophermart/internal/storage"
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
 	"github.com/oleshko-g/oggophermart/internal/storage/db/sql"
 	"github.com/oleshko-g/oggophermart/internal/transport"
 )
 
-var (
-	svc *balanceSvc
-)
-
-func TestMain(m *testing.M) {
+func Test_processAccrual(t *testing.T) {
 	cfg := configueStorage()
-	storage, err := sql.New(cfg)
+
+	var storageBalance storage.Balance
+
+	storageBalance, err := sql.New(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	svc = New(oglog.NewLoggingCtx(), storage, nil, &moqAccrual.AccrualMock{})
-}
-
-func Test_processAccrual(t *testing.T) {
 	tests := []struct {
 		name                  string
 		orderNumber           string
@@ -36,35 +31,33 @@ func Test_processAccrual(t *testing.T) {
 		fetchOrderAccrualFunc fetchOrderAccrualFunc
 	}{
 		{
-			name:                  "empty order accrual",
+			name:                  "order processed with accrual",
 			orderNumber:           "388772667448878",
 			orderIDString:         "019be993-bf1a-7088-a5d4-006bd660cc73",
-			fetchOrderAccrualFunc: emptyFetchOrderAccrualFunc,
+			fetchOrderAccrualFunc: processedFetchOrderAccrualFunc,
 		},
 		{
 			name:                  "empty order accrual",
 			orderNumber:           "757483714",
 			orderIDString:         "019be994-0e1f-7d0f-b288-67c60cc3218c",
-			fetchOrderAccrualFunc: processedFetchOrderAccrualFunc,
+			fetchOrderAccrualFunc: emptyFetchOrderAccrualFunc,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			svc := New(oglog.NewLoggingCtx(), storageBalance, nil, &moqAccrual.AccrualMock{FetchOrderAccrualFunc: test.fetchOrderAccrualFunc})
 			orderID, err := uuid.Parse(test.orderIDString)
 			if err != nil {
 				t.Error(err)
 			}
+
 			svc.processAccrual(context.Background(), orderID)
+			if err != nil {
+				t.Error(err)
+			}
 		})
 	}
-	orderID, _ := uuid.NewRandom()
-	ctx, cancel := context.WithCancelCause(context.Background())
-	defer cancel(nil)
 
-	err := svc.processAccrual(ctx, orderID)
-	if err != nil {
-		t.Error(err)
-	}
 }
 
 func configueStorage() *db.Config {
