@@ -29,16 +29,34 @@ func TestMain(m *testing.M) {
 }
 
 func Test_processAccrual(t *testing.T) {
-	cases := struct {
-		name        string
-		orderNumber string
-		FetchOrderAccrualFunc fetchOrderAccrualFunc
+	tests := []struct {
+		name                  string
+		orderNumber           string
+		orderIDString         string
+		fetchOrderAccrualFunc fetchOrderAccrualFunc
 	}{
-		name: "empty order accrual",
-		orderNumber: "123",
-		FetchOrderAccrualFunc: emptyFetchOrderAccrualFunc,
+		{
+			name:                  "empty order accrual",
+			orderNumber:           "388772667448878",
+			orderIDString:         "019be993-bf1a-7088-a5d4-006bd660cc73",
+			fetchOrderAccrualFunc: emptyFetchOrderAccrualFunc,
+		},
+		{
+			name:                  "empty order accrual",
+			orderNumber:           "757483714",
+			orderIDString:         "019be994-0e1f-7d0f-b288-67c60cc3218c",
+			fetchOrderAccrualFunc: processedFetchOrderAccrualFunc,
+		},
 	}
-	_ = cases
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			orderID, err := uuid.Parse(test.orderIDString)
+			if err != nil {
+				t.Error(err)
+			}
+			svc.processAccrual(context.Background(), orderID)
+		})
+	}
 	orderID, _ := uuid.NewRandom()
 	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
@@ -62,3 +80,14 @@ type fetchOrderAccrualFunc func(context.Context, transport.FetchOrderAccrualPayl
 func emptyFetchOrderAccrualFunc(ctx context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
 	return nil, nil
 }
+
+func processedFetchOrderAccrualFunc(ctx context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
+	accrual := float64(729.98)
+	return &transport.FetchOrderAccrualResult{
+		Order:   payload.Number,
+		Status:  transport.OrderAccrualStatusProcessed,
+		Accrual: &accrual,
+	}, nil
+}
+
+// result=&{Order:388772667448878 Status:PROCESSED Accrual:0x14000388480}
