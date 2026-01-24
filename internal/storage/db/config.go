@@ -19,7 +19,8 @@ func (c *Config) DSN() *dataSource { // revive:disable-line:unexported-return pr
 
 // dataSource represent a valid Data Source
 type dataSource struct {
-	name string
+	_DSN       string
+	DabaseName string
 	DriverName
 	Source string
 }
@@ -38,20 +39,22 @@ func (d *dataSource) Set(s string) error {
 		return err
 	}
 
-	if url.Scheme != string(DriverNamePostgres) && url.Scheme != string(DriverNamePostgreSQL) {
+	if url.Scheme != string(DriverNamePostgres) && url.Scheme != string(driverNamePostgreSQL) {
 		return storageErrors.ErrUnsupportedDataSource
 	}
 
+	d._DSN = url.String()
 	// there's only "postgres" SQL driver
-	d.DriverName = DriverName(DriverNamePostgres)
-
-	d.name = url.String()
+	d.DriverName = DriverNamePostgres
+	if url.Path != "" {
+		d.DabaseName = url.Path
+	}
 
 	return nil
 }
 
 func (d *dataSource) String() string {
-	return d.name
+	return d._DSN
 }
 
 // DriverName is a valid database driver name
@@ -64,5 +67,5 @@ func (d DriverName) String() string {
 // Supported database drivers
 const (
 	DriverNamePostgres   DriverName = "postgres"
-	DriverNamePostgreSQL DriverName = "postgresql"
+	driverNamePostgreSQL DriverName = "postgresql"
 )

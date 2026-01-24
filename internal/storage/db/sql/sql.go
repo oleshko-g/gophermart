@@ -4,12 +4,13 @@ package sql
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-	_ "github.com/lib/pq" // revive:disable-line:blank-imports registers the postgres driver
+	pgDriver "github.com/lib/pq" // revive:disable-line:blank-imports registers the postgres driver
 	genDBSQL "github.com/oleshko-g/oggophermart/internal/gen/storage/db/sql"
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
@@ -23,7 +24,6 @@ func New(c *db.Config) (s *Storage, err error) {
 	if err != nil {
 		return nil, err
 	}
-
 	err = database.Ping()
 	if err != nil {
 		return nil, err
@@ -263,4 +263,17 @@ func (s *Storage) BeginTx(ctx context.Context) (*storage.Tx, error) {
 		Balance: sTx,
 	}, nil
 
+}
+
+func connectToPostgresDB(ctx context.Context, cfg db.Config) (driver.Conn, error) {
+	if cfg.DriverName.String() != string(db.DriverNamePostgres) &&
+		cfg.DabaseName != string(db.DriverNamePostgres) {
+		return nil, storageErrors.ErrUnsupportedDataSource
+	}
+
+	connecter, err := pgDriver.NewConnector(cfg.DSN().String())
+	if err != nil {
+		return nil, err
+	}
+	return connecter.Connect(ctx)
 }
