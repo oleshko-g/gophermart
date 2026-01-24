@@ -9,6 +9,9 @@ var (
 	// ErrUnsupportedDataSource is returned when data source is not supported by the storage implementation
 	ErrUnsupportedDataSource = errors.New("unsupported data source")
 
+	// ErrMissingDatabaseName is returned when data source lacks database name
+	ErrMissingDatabaseName = errors.New("missing database name")
+
 	// ErrNoAffect is returned when storage operation didn't do anything
 	ErrNoAffect = errors.New("no affect")
 

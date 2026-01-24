@@ -19,17 +19,22 @@ import (
 )
 
 // New configures and open a new connection to the db and returns a [Storage] or an error
-func New(c *db.Config) (s *Storage, err error) {
-	database, err := sql.Open(c.DSN().DriverName.String(), c.DSN().String())
-	if err != nil {
-		return nil, err
-	}
-	err = database.Ping()
+func New(cfg *db.Config) (s *Storage, err error) {
+
+	database, err := sql.Open(cfg.DSN().DriverName.String(), cfg.DSN().String())
 	if err != nil {
 		return nil, err
 	}
 
-	if err = schema.Up(c.DSN().DriverName, database); err != nil {
+	err = database.Ping()
+	if err != nil {
+		database, err = newDB(*cfg) //
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err = schema.Up(cfg.DSN().DriverName, database); err != nil {
 		return
 	}
 
@@ -265,15 +270,45 @@ func (s *Storage) BeginTx(ctx context.Context) (*storage.Tx, error) {
 
 }
 
-func connectToPostgresDB(ctx context.Context, cfg db.Config) (driver.Conn, error) {
+func newDB(cfg db.Config) (*sql.DB, error) {
+	ctx := context.Background()
+	connector, err := newPostgresConnector(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	err = createDB(ctx, connector, cfg.DabaseName)
+	if err != nil {
+		return nil, err
+	}
+
+	return sql.Open(string(cfg.DriverName), cfg.DSN().String())
+}
+
+// createDB executes CREATE DATABASE with the dbName parameter using the provided [driver.Connetor]
+func createDB(ctx context.Context, conn driver.Connector, dbName string) error {
+	q := fmt.Sprintf("CREATE DATABASE %s;", dbName)
+
+	db := sql.OpenDB(conn)
+	defer db.Close()
+
+	_, err := db.ExecContext(ctx, q)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func newPostgresConnector(ctx context.Context, cfg db.Config) (driver.Connector, error) {
 	if cfg.DriverName.String() != string(db.DriverNamePostgres) &&
 		cfg.DabaseName != string(db.DriverNamePostgres) {
 		return nil, storageErrors.ErrUnsupportedDataSource
 	}
 
-	connecter, err := pgDriver.NewConnector(cfg.DSN().String())
+	connecter, err := pgDriver.NewConnector(cfg.DSN().Default)
 	if err != nil {
 		return nil, err
 	}
-	return connecter.Connect(ctx)
+
+	return connecter, nil
 }

@@ -3,6 +3,7 @@ package db
 
 import (
 	"net/url"
+	"strings"
 
 	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
 )
@@ -22,7 +23,8 @@ type dataSource struct {
 	_DSN       string
 	DabaseName string
 	DriverName
-	Source string
+	Source  string
+	Default string
 }
 
 // Set parses s and sets [DSN] and [Driver] or returns an error
@@ -46,9 +48,14 @@ func (d *dataSource) Set(s string) error {
 	d._DSN = url.String()
 	// there's only "postgres" SQL driver
 	d.DriverName = DriverNamePostgres
-	if url.Path != "" {
-		d.DabaseName = url.Path
+
+	databaseName, _ := strings.CutPrefix(url.Path, "/")
+	if databaseName == "" {
+		return storageErrors.ErrMissingDatabaseName
 	}
+	d.DabaseName = databaseName
+
+	d.Default = "postgres://localhost:5432/postgres?sslmode=disable"
 
 	return nil
 }
