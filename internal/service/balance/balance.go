@@ -241,6 +241,8 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 		log.KV{K: "orderID", V: orderID},
 	)
 
+	ctx, cancel := context.WithTimeout(ctx, 100 * time.Millisecond)
+	defer cancel()
 	// start storate transaction
 	storageTx, err := s.Balance.BeginTx(ctx)
 	if err != nil {
