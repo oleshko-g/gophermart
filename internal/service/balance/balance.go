@@ -241,8 +241,8 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 		log.KV{K: "orderID", V: orderID},
 	)
 
-	ctx, cancel := context.WithTimeout(ctx, 100 * time.Millisecond)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(ctx, 100 * time.Millisecond)
+	// defer cancel()
 	// start storate transaction
 	storageTx, err := s.Balance.BeginTx(ctx)
 	if err != nil {
@@ -282,26 +282,26 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 		return nil
 	}
 
-	if res.Status == transport.OrderAccrualStatusProcessed && res.Accrual != nil {
-		amount := int32(*res.Accrual * 100)
-		err := s.StoreUserAccrual(ctx, order.UserID, order.ID, amount)
-		if err != nil {
-			return err
-		}
-		log.Debug(loggingCtx, log.KV{K: "msg", V: "stored accrual"}, log.KV{K: "amount", V: amount})
-	}
-
 	orderStatus, err := accrualStatusToOrderStatus(res.Status)
 	if err != nil {
 		return err
 	}
-	log.Debug(loggingCtx, log.KV{K: "msg", V: "convertedAccrualStatus to Order status"}, log.KV{K: "accrualStatus", V: res.Status}, log.KV{K: "accrualStatus", V: orderStatus})
+	log.Debug(loggingCtx, log.KV{K: "msg", V: "convertedAccrualStatus to Order status"}, log.KV{K: "accrualStatus", V: res.Status}, log.KV{K: "orderStatus", V: orderStatus})
 
 	err = storageTx.UpdateOrderStatus(ctx, orderID, orderStatus)
 	if err != nil {
 		return err
 	}
 	log.Debug(loggingCtx, log.KV{K: "msg", V: "updated order status"}, log.KV{K: "orderStatus", V: orderStatus})
+
+	if orderStatus == OrderStatusProcessed && res.Accrual != nil {
+		amount := int32(*res.Accrual * 100)
+		err := storageTx.StoreUserAccrual(ctx, order.UserID, order.ID, amount)
+		if err != nil {
+			return err
+		}
+		log.Debug(loggingCtx, log.KV{K: "msg", V: "stored accrual"}, log.KV{K: "amount", V: amount})
+	}
 
 	err = storageTx.Tx.Commit()
 	if err != nil {

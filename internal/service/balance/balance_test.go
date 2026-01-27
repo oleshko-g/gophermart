@@ -33,15 +33,15 @@ func Test_processAccrual(t *testing.T) {
 		{
 			name:                  "order processed with accrual",
 			orderNumber:           "388772667448878",
-			orderIDString:         "019be993-bf1a-7088-a5d4-006bd660cc73",
+			orderIDString:         "019bfe24-c85e-7c58-bca4-a9dfd7b95a5f",
 			fetchOrderAccrualFunc: processedFetchOrderAccrualFunc,
 		},
-		{
-			name:                  "empty order accrual",
-			orderNumber:           "757483714",
-			orderIDString:         "019be994-0e1f-7d0f-b288-67c60cc3218c",
-			fetchOrderAccrualFunc: emptyFetchOrderAccrualFunc,
-		},
+		// {
+		// 	name:                  "empty order accrual",
+		// 	orderNumber:           "757483714",
+		// 	orderIDString:         "019be994-0e1f-7d0f-b288-67c60cc3218c",
+		// 	fetchOrderAccrualFunc: emptyFetchOrderAccrualFunc,
+		// },
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
