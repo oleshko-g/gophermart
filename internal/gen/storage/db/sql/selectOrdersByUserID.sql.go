@@ -7,28 +7,58 @@ package sql
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 const selectOrdersByUserID = `-- name: SelectOrdersByUserID :many
+WITH
+  cte_transactions AS (
+    SELECT
+      order_id,
+      amount AS accrual
+    FROM
+      transactions
+    WHERE
+      transactions.user_id = $1
+      AND transactions.kind = 'ACCRUAL'
+  ),
+  cte_orders AS (
+    SELECT
+      id AS order_id,
+      number,
+      status,
+      created_at
+    FROM
+      orders
+    WHERE
+      orders.user_id = $1
+  ),
+  user_orders AS (
+    SELECT
+      cte_orders.number,
+      cte_orders.status,
+      cte_orders.created_at,
+      cte_transactions.accrual
+    FROM
+      cte_orders
+      LEFT JOIN cte_transactions ON cte_orders.order_id = cte_transactions.order_id
+    ORDER BY
+      created_at ASC
+  )
 SELECT
-  number,
-  status,
-  created_at
+  number, status, created_at, accrual
 FROM
-  orders
-WHERE
-  user_id = $1
-ORDER BY
-  created_at ASC
+  user_orders
 `
 
 type SelectOrdersByUserIDRow struct {
 	Number    string
 	Status    string
 	CreatedAt time.Time
+	Accrual   sql.NullInt32
 }
 
 func (q *Queries) SelectOrdersByUserID(ctx context.Context, userID uuid.UUID) ([]SelectOrdersByUserIDRow, error) {
@@ -40,7 +70,12 @@ func (q *Queries) SelectOrdersByUserID(ctx context.Context, userID uuid.UUID) ([
 	var items []SelectOrdersByUserIDRow
 	for rows.Next() {
 		var i SelectOrdersByUserIDRow
-		if err := rows.Scan(&i.Number, &i.Status, &i.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&i.Number,
+			&i.Status,
+			&i.CreatedAt,
+			&i.Accrual,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

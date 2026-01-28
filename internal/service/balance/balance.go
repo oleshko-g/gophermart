@@ -131,10 +131,17 @@ func (s *balanceSvc) ListUserOrders(ctx context.Context, payload *genBalance.Lis
 	}
 
 	for _, v := range ordersByUserID {
+		var accrual *uint
+		if v.Accrual.Valid {
+			a := uint(v.Accrual.Int32) / 100
+			accrual = &a
+		}
+
 		userOrder := &genBalance.Order{
 			Number:     v.Number,
 			Status:     v.Status,
 			UploadedAt: v.CreatedAt.Format(time.RFC3339),
+			Accrual:    accrual,
 		}
 		res.Orders = append(res.Orders, userOrder)
 	}
