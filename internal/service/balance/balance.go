@@ -16,6 +16,7 @@ import (
 	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
 	"github.com/oleshko-g/oggophermart/internal/transport"
 	"goa.design/clue/log"
+	goa "goa.design/goa/v3/pkg"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -329,4 +330,20 @@ func accrualStatusToOrderStatus(accrualStatus transport.OrderAccrualStatus) (str
 		return OrderStatusProcessed, nil
 	}
 	return "", ErrUnknownAccrualOrderStatus
+}
+
+func WithLogEndpoint(endpoint goa.Endpoint) goa.Endpoint {
+	return func(ctx context.Context, payload any) (result any, err error) {
+		log.MustContainLogger(ctx)
+
+		p := fmt.Sprintf("%+v", payload)
+		log.Debug(ctx, log.KV{K: "payload", V: p})
+
+		result, err = endpoint(ctx, payload)
+
+		r := fmt.Sprintf("%+v", result)
+		log.Debug(ctx, log.KV{K: "result", V: r}, log.KV{K: "error", V: err})
+
+		return result, err
+	}
 }
