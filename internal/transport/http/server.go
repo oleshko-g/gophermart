@@ -9,7 +9,6 @@ import (
 	"time"
 
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
-	balance "github.com/oleshko-g/oggophermart/internal/service/balance"
 	genBalanceHTTPSrv "github.com/oleshko-g/oggophermart/internal/gen/http/balance/server"
 	genUserHTTPSvr "github.com/oleshko-g/oggophermart/internal/gen/http/user/server"
 	user "github.com/oleshko-g/oggophermart/internal/gen/user"
@@ -67,7 +66,7 @@ func NewServer(loggingCtx context.Context, cfg Config, svc service.Service) Serv
 	)
 	{
 		balanceEndpoints = genBalance.NewEndpoints(svc.Balance)
-		balanceEndpoints.Use(balance.WithLogEndpoint)
+		balanceEndpoints.Use(service.WithLogEndpoint)
 
 		userEndpoints = user.NewEndpoints(svc.User)
 
