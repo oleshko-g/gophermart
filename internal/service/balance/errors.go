@@ -18,4 +18,7 @@ var (
 
 	// ErrUnknownAccrualOrderStatus is the error return when accrual order status isn't known
 	ErrUnknownAccrualOrderStatus = errors.New("Accrual order status isn't known")
+
+	// ErrNegativeBalance is the error returned when a user balance have become negative after a withdrawal
+	ErrNegativeBalance = errors.New("User balance is negative")
 )

@@ -210,9 +210,17 @@ func (s *balanceSvc) WithdrawUserBalance(ctx context.Context, payload *genBalanc
 	if err != nil {
 		return err
 	}
-	// TODO: RetrieveUserBalance
+
+	userBalance, err := storageTx.Retrieve(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if userBalance.Current < 0 {
+		return ErrNegativeBalance
+	}
+
 	// TODO: if the latest UserBalanceLastTransaction is NOT the stored Withdraw THEN rollback storageTx
-	// TODO: if the balance is negative then rollback storageTx
 	storageTx.Tx.Commit()
 	return nil
 }
