@@ -60,13 +60,6 @@ func (s *Storage) RetrieveUserBalance(ctx context.Context, userID uuid.UUID) (cu
 	return 0, 0, nil
 }
 
-// SaveUserTransaction saved the user's transaction by the following logic:
-//   - a) If the amount is positive then it's an accrual
-//   - b) if the amount is negative then it's a withdrawl
-func (s *Storage) SaveUserTransaction(ctx context.Context, userID uuid.UUID, amount int) error {
-	return nil
-}
-
 // RetrieveUser retrieves a user id by their login
 func (s *Storage) RetrieveUser(ctx context.Context, login string) (userID uuid.UUID, err error) {
 	userID, err = s.queries.SelectUserIDByLogin(ctx, login)
@@ -208,6 +201,7 @@ func (s *Storage) RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, 
 	return orderIDs, nil
 }
 
+// StoreUserWithdrawal stores an accrual user transaction
 func (s *Storage) RetrieveOrderForAccrual(ctx context.Context, orderID uuid.UUID) (storage.Order, error) {
 
 	order, err := s.queries.SelectOrder(ctx, orderID)
@@ -231,11 +225,10 @@ func (s *Storage) StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderI
 	if err != nil {
 		return nil
 	}
-	kind := "ACCRUAL"
 
 	err = s.queries.InsertBalanceTransaction(ctx, genDBSQL.InsertBalanceTransactionParams{
 		ID:      newTransactionID,
-		Kind:    kind,
+		Kind:    schema.TransactionKindAccrual,
 		UserID:  userID,
 		OrderID: orderID,
 		Amount:  amount,
@@ -245,6 +238,27 @@ func (s *Storage) StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderI
 	}
 
 	return nil
+}
+
+// StoreUserWithdrawal stores a withdrawal user transaction
+func (s *Storage) StoreUserWithdrawal(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, amount int32) (uuid.UUID, error) {
+	newTransactionID, err := uuid.NewV7()
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	err = s.queries.InsertBalanceTransaction(ctx, genDBSQL.InsertBalanceTransactionParams{
+		ID:      newTransactionID,
+		Kind:    schema.TransactionKindWithdrawal,
+		UserID:  userID,
+		OrderID: orderID,
+		Amount:  amount,
+	})
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	return newTransactionID, nil
 }
 
 type Tx struct {

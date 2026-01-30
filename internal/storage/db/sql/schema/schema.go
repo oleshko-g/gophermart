@@ -33,12 +33,14 @@ func Up(d db.DriverName, database *sql.DB) error {
 	return nil
 }
 
-// orderStatus are possible order statuses
-type orderStatus string
-
 const (
 	OrderStatusNew        = "NEW"
 	OrderStatusProcessing = "PROCESSING"
 	OrderStatusProcessed  = "PROCESSED"
 	OrderStatusInvalid    = "INVALID"
+)
+
+const (
+	TransactionKindAccrual    = "ACCRUAL"
+	TransactionKindWithdrawal = "WITHDRAWAL"
 )

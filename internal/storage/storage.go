@@ -36,7 +36,6 @@ type User interface {
 type Balance interface {
 	Transacter
 	RetrieveUserBalance(ctx context.Context, userID uuid.UUID) (currentBalance, withdrawn int, err error)
-	SaveUserTransaction(ctx context.Context, userID uuid.UUID, amount int) error
 	StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber, status string, createdAt time.Time) error
 	RetreiveOrderUser(ctx context.Context, orderNumber string) (userID uuid.UUID, err error)
 	RetrieaveUserOrders(ctx context.Context, userID uuid.UUID) ([]genDBSQL.SelectOrdersByUserIDRow, error)
@@ -45,6 +44,7 @@ type Balance interface {
 	RetrieveOrderForAccrual(ctx context.Context, orderID uuid.UUID) (Order, error)
 	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error
 	StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, amount int32) error
+	StoreUserWithdrawal(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, amount int32) (uuid.UUID, error)
 }
 
 type Transaction interface {
