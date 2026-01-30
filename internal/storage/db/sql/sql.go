@@ -112,11 +112,11 @@ newUser:
 	return nil
 }
 
-func (s *Storage) StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber, orderStatus string, createdAt time.Time) error {
+func (s *Storage) StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber, orderStatus string, createdAt time.Time) (orderID uuid.UUID, err error) {
 
 	newOrderID, err := uuid.NewV7()
 	if err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 	res, err := s.queries.InsertOrder(ctx,
 		genDBSQL.InsertOrderParams{
@@ -127,19 +127,19 @@ func (s *Storage) StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber,
 			CreatedAt: createdAt,
 		})
 	if err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 
 	if rowsAffected == 0 {
-		return storageErrors.ErrAlreadyExists
+		return uuid.UUID{}, storageErrors.ErrAlreadyExists
 	}
 
-	return nil
+	return newOrderID, nil
 }
 func (s *Storage) RetreiveOrder(ctx context.Context, userID uuid.UUID, orderNumber string) error {
 	// s.queries.Se

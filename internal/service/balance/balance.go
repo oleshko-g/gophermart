@@ -75,7 +75,7 @@ func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.Up
 		return res, nil
 	}
 
-	err = s.StoreOrder(ctx, userID, payload.OrderNumber, OrderStatusNew, time.Now().UTC())
+	_, err = s.StoreOrder(ctx, userID, payload.OrderNumber, OrderStatusNew, time.Now().UTC())
 	if err != nil {
 		return nil, svcErrors.ErrInternalServiceError
 	}
@@ -90,6 +90,11 @@ const (
 	OrderStatusProcessing = "PROCESSING"
 	OrderStatusProcessed  = "PROCESSED"
 	OrderStatusInvalid    = "INVALID"
+)
+
+const (
+	TransactionKindAccrual    = "ACCRUAL"
+	TransactionKindWithdrawal = "WITHDRAWAL"
 )
 
 func checkOrderNumber(orderNumber string) error {
@@ -170,7 +175,45 @@ func (s *balanceSvc) GetUserBalance(ctx context.Context, payload *genBalance.Get
 	}, nil
 }
 
-func (s *balanceSvc) WithdrawUserBalance(context.Context, *genBalance.WithdrawUserBalancePayload) (err error) {
+func (s *balanceSvc) WithdrawUserBalance(ctx context.Context, payload *genBalance.WithdrawUserBalancePayload) (err error) {
+	loggingCtx := log.With(s.loggingCtx,
+		log.KV{K: "func", V: "WithdrawUserBalance"},
+		log.KV{K: "orderNumber", V: payload.Order},
+	)
+
+	ctx, err = s.Auther.JWTAuth(ctx, payload.Authorization, nil)
+	if err != nil {
+		return err
+	}
+
+	userID, err := s.Auther.UserIDFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := checkOrderNumber(payload.Order); err != nil {
+		return err
+	}
+
+	storageTx, err := s.Balance.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	log.Debugf(loggingCtx, "began storage transaction")
+	orderID, err := storageTx.StoreOrder(ctx, userID, payload.Order, OrderStatusProcessed, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+
+	amount := int32(payload.Sum * 100)
+	_, err = storageTx.StoreUserWithdrawal(ctx, userID, orderID, amount)
+	if err != nil {
+		return err
+	}
+	// TODO: RetrieveUserBalance
+	// TODO: if the latest UserBalanceLastTransaction is NOT the stored Withdraw THEN rollback storageTx
+	// TODO: if the balance is negative then rollback storageTx
+	storageTx.Tx.Commit()
 	return nil
 }
 
