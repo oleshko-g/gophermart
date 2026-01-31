@@ -41,10 +41,10 @@ type WithdrawUserBalanceUserIsNotAuthenticatedResponseBody struct {
 
 // Order is used to define fields on response body types.
 type Order struct {
-	Number     string `form:"number" json:"number" xml:"number"`
-	Status     string `form:"status" json:"status" xml:"status"`
-	Accrual    *uint  `form:"accrual,omitempty" json:"accrual,omitempty" xml:"accrual,omitempty"`
-	UploadedAt string `form:"uploaded_at" json:"uploaded_at" xml:"uploaded_at"`
+	Number     string   `form:"number" json:"number" xml:"number"`
+	Status     string   `form:"status" json:"status" xml:"status"`
+	Accrual    *float64 `form:"accrual,omitempty" json:"accrual,omitempty" xml:"accrual,omitempty"`
+	UploadedAt string   `form:"uploaded_at" json:"uploaded_at" xml:"uploaded_at"`
 }
 
 // NewListUserOrdersResponseBody builds the HTTP response body from the result

@@ -79,7 +79,7 @@ type ListUserOrdersResult struct {
 type Order struct {
 	Number     string
 	Status     string
-	Accrual    *uint
+	Accrual    *float64
 	UploadedAt string
 }
 

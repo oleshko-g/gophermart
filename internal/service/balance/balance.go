@@ -56,7 +56,7 @@ func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.Up
 
 	err = checkOrderNumber(payload.OrderNumber)
 	if err != nil {
-		return nil, err
+		return nil, ErrInvalidOrderNumber
 	}
 
 	dbUserID, err := s.RetreiveOrderUser(ctx, payload.OrderNumber)
@@ -136,9 +136,9 @@ func (s *balanceSvc) ListUserOrders(ctx context.Context, payload *genBalance.Lis
 	}
 
 	for _, v := range ordersByUserID {
-		var accrual *uint
+		var accrual *float64
 		if v.Accrual.Valid {
-			a := uint(v.Accrual.Int32) / 100
+			a := float64(v.Accrual.Int32) / 100
 			accrual = &a
 		}
 
@@ -192,7 +192,7 @@ func (s *balanceSvc) WithdrawUserBalance(ctx context.Context, payload *genBalanc
 	}
 
 	if err := checkOrderNumber(payload.Order); err != nil {
-		return err
+		return ErrInvalidOrderNumber
 	}
 
 	storageTx, err := s.Balance.BeginTx(ctx)
@@ -221,7 +221,7 @@ func (s *balanceSvc) WithdrawUserBalance(ctx context.Context, payload *genBalanc
 	}
 
 	if userBalance.Current < 0 {
-		return ErrNegativeBalance
+		return ErrInsufficientFunds
 	}
 
 	storageTx.Tx.Commit()

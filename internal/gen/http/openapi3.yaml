@@ -426,9 +426,10 @@ components:
             type: object
             properties:
                 accrual:
-                    type: integer
-                    example: 839832540227140899
-                    format: int64
+                    type: number
+                    example: 0.09105482646382859
+                    format: double
+                    exclusiveMinimum: 0
                 number:
                     type: string
                     example: "470"
@@ -446,7 +447,7 @@ components:
                     example: "2011-09-13T15:10:59Z"
                     format: date-time
             example:
-                accrual: 16275879363951163113
+                accrual: 0.7646343765507841
                 number: "5"
                 status: PROCESSING
                 uploaded_at: "2014-07-08T07:33:40Z"

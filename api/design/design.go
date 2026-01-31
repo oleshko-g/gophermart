@@ -204,6 +204,7 @@ var _ = Service("balance", func() {
 			})
 		})
 	})
+	// INFO:  GetUserBalance
 	Method("GetUserBalance", func() {
 		Description("Get user balance")
 		Payload(func() {
@@ -245,6 +246,7 @@ var _ = Service("balance", func() {
 			})
 		})
 	})
+	// INFO:  WithdrawUserBalance
 	Method("WithdrawUserBalance", func() {
 		Payload(func() {
 			Token("Authorization", String, "A JWT token used to authenticate a request", func() {
@@ -352,7 +354,9 @@ var Order = Type("Order", func() {
 	Attribute("status", String, func() {
 		Enum("NEW", "PROCESSING", "INVALID", "PROCESSED")
 	})
-	Attribute("accrual", UInt)
+	Attribute("accrual", Float64, func() {
+		ExclusiveMinimum(0)
+	})
 	Attribute("uploaded_at", String, func() {
 		Format(FormatDateTime)
 	})

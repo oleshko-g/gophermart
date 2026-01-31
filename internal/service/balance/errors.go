@@ -7,6 +7,7 @@ import (
 var (
 	// ErrOwnerMismatch is the error value which is used to map to the 409 Conflict HTTP Status code
 	ErrOwnerMismatch = errors.New("The order belongs to another user")
+
 	// ErrInvalidOrderNumber is the error value which is used to map to the 422 Unprocessable Entity HTTP Status code
 	ErrInvalidOrderNumber = errors.New("Invalid order number")
 
@@ -20,7 +21,7 @@ var (
 	ErrUnknownAccrualOrderStatus = errors.New("Accrual order status isn't known")
 
 	// ErrNegativeBalance is the error returned when a user balance have become negative after a withdrawal
-	ErrNegativeBalance = errors.New("User balance is negative")
+	ErrInsufficientFunds = errors.New("Insufficient funds")
 
 	// ErrCurrentBalanceChanged is the error returned when a user balance has been changed by other transaction since current transaction changed it
 	ErrCurrentBalanceChanged = errors.New("Current balance has been changed by other transaction")

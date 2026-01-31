@@ -345,9 +345,10 @@ definitions:
         type: object
         properties:
             accrual:
-                type: integer
-                example: 12502698392339350606
-                format: int64
+                type: number
+                example: 0.35554527589053475
+                format: double
+                exclusiveMinimum: 0
             number:
                 type: string
                 example: "664"
@@ -365,7 +366,7 @@ definitions:
                 example: "2013-10-10T20:18:25Z"
                 format: date-time
         example:
-            accrual: 15339435055665327048
+            accrual: 0.6631048812052652
             number: "51"
             status: PROCESSING
             uploaded_at: "1995-09-20T18:24:58Z"
