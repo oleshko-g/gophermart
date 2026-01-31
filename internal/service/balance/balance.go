@@ -206,7 +206,7 @@ func (s *balanceSvc) WithdrawUserBalance(ctx context.Context, payload *genBalanc
 	}
 
 	amount := int32(payload.Sum * 100)
-	_, err = storageTx.StoreUserWithdrawal(ctx, userID, orderID, amount)
+	currentWithdrawalID, err := storageTx.StoreUserWithdrawal(ctx, userID, orderID, amount)
 	if err != nil {
 		return err
 	}
@@ -216,11 +216,14 @@ func (s *balanceSvc) WithdrawUserBalance(ctx context.Context, payload *genBalanc
 		return err
 	}
 
+	if currentWithdrawalID != userBalance.LastTransactionID.UUID {
+		return ErrCurrentBalanceChanged
+	}
+
 	if userBalance.Current < 0 {
 		return ErrNegativeBalance
 	}
 
-	// TODO: if the latest UserBalanceLastTransaction is NOT the stored Withdraw THEN rollback storageTx
 	storageTx.Tx.Commit()
 	return nil
 }

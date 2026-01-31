@@ -21,4 +21,7 @@ var (
 
 	// ErrNegativeBalance is the error returned when a user balance have become negative after a withdrawal
 	ErrNegativeBalance = errors.New("User balance is negative")
+
+	// ErrCurrentBalanceChanged is the error returned when a user balance has been changed by other transaction since current transaction changed it
+	ErrCurrentBalanceChanged = errors.New("Current balance has been changed by other transaction")
 )

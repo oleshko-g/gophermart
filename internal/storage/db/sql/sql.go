@@ -182,6 +182,7 @@ func (s *Storage) RetrieaveUserOrders(ctx context.Context, userID uuid.UUID) (us
 	return rows, nil
 }
 
+// Retrieve retrieves the user's balance and the amount withdrawn by their userID or an error
 func (s *Storage) Retrieve(ctx context.Context, userID uuid.UUID) (genDBSQL.SelectBalanceByUserIDRow, error) {
 	userBalance, err := s.queries.SelectBalanceByUserID(ctx, userID)
 	if err != nil {

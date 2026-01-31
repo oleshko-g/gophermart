@@ -37,7 +37,8 @@ type User struct {
 }
 
 type UserBalance struct {
-	UserID       uuid.UUID
-	Current      int32
-	WithdrawnSum int64
+	UserID            uuid.UUID
+	Current           int32
+	WithdrawnSum      int64
+	LastTransactionID uuid.NullUUID
 }

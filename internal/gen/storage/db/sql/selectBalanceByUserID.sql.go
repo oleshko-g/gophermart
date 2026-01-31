@@ -14,7 +14,8 @@ import (
 const selectBalanceByUserID = `-- name: SelectBalanceByUserID :one
 SELECT
   current,
-  withdrawn_sum
+  withdrawn_sum,
+  last_transaction_id
 FROM
   user_balances
 WHERE
@@ -22,13 +23,14 @@ WHERE
 `
 
 type SelectBalanceByUserIDRow struct {
-	Current      int32
-	WithdrawnSum int64
+	Current           int32
+	WithdrawnSum      int64
+	LastTransactionID uuid.NullUUID
 }
 
 func (q *Queries) SelectBalanceByUserID(ctx context.Context, userID uuid.UUID) (SelectBalanceByUserIDRow, error) {
 	row := q.db.QueryRowContext(ctx, selectBalanceByUserID, userID)
 	var i SelectBalanceByUserIDRow
-	err := row.Scan(&i.Current, &i.WithdrawnSum)
+	err := row.Scan(&i.Current, &i.WithdrawnSum, &i.LastTransactionID)
 	return i, err
 }

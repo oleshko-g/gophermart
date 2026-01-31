@@ -35,7 +35,6 @@ type User interface {
 // Balance declares the storage interfce for the balance service
 type Balance interface {
 	Transacter
-	RetrieveUserBalance(ctx context.Context, userID uuid.UUID) (currentBalance, withdrawn int, err error)
 	StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber, status string, createdAt time.Time) (orderID uuid.UUID, err error)
 	RetreiveOrderUser(ctx context.Context, orderNumber string) (userID uuid.UUID, err error)
 	RetrieaveUserOrders(ctx context.Context, userID uuid.UUID) ([]genDBSQL.SelectOrdersByUserIDRow, error)
