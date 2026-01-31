@@ -5,7 +5,7 @@
 gen:
 	goa gen github.com/oleshko-g/oggophermart/api/design -o internal/ 	&& \
 	sqlc generate && \
-	go generate
+	go generate ./...
 
 test: vet
 	go fmt
