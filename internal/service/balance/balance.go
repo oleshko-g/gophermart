@@ -4,31 +4,41 @@ package balance
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/EClaesson/go-luhn"
+	"github.com/google/uuid"
 	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	"github.com/oleshko-g/oggophermart/internal/service"
 	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
 	"github.com/oleshko-g/oggophermart/internal/storage"
 	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
+	"github.com/oleshko-g/oggophermart/internal/transport"
+	"goa.design/clue/log"
+	"golang.org/x/sync/errgroup"
 )
 
-// balance service example implementation.
-// The example methods log the requests and return zero values.
 type balanceSvc struct {
 	storage.Balance
 	service.Auther
+	loggingCtx             context.Context
+	accrual                transport.Accrual
+	accrualOrdersToProcess chan uuid.UUID
 }
 
 var _ genBalance.Service = (*balanceSvc)(nil)
 var _ genBalance.Auther = (*balanceSvc)(nil)
 
 // New returns the balance service implementation.
-func New(storage storage.Balance, auther service.Auther) *balanceSvc {
+func New(loggingCtx context.Context, storage storage.Balance, auther service.Auther, accrual transport.Accrual) *balanceSvc {
+	log.MustContainLogger(loggingCtx)
 	return &balanceSvc{
-		Balance: storage,
-		Auther:  auther,
+		loggingCtx:             loggingCtx,
+		Balance:                storage,
+		Auther:                 auther,
+		accrualOrdersToProcess: make(chan uuid.UUID),
+		accrual:                accrual,
 	}
 }
 
@@ -46,7 +56,7 @@ func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.Up
 
 	err = checkOrderNumber(payload.OrderNumber)
 	if err != nil {
-		return nil, err
+		return nil, ErrInvalidOrderNumber
 	}
 
 	dbUserID, err := s.RetreiveOrderUser(ctx, payload.OrderNumber)
@@ -65,7 +75,7 @@ func (s *balanceSvc) UploadUserOrder(ctx context.Context, payload *genBalance.Up
 		return res, nil
 	}
 
-	err = s.StoreOrder(ctx, userID, payload.OrderNumber, OrderStatusNew, time.Now().UTC())
+	_, err = s.StoreOrder(ctx, userID, payload.OrderNumber, OrderStatusNew, time.Now().UTC())
 	if err != nil {
 		return nil, svcErrors.ErrInternalServiceError
 	}
@@ -82,6 +92,11 @@ const (
 	OrderStatusInvalid    = "INVALID"
 )
 
+const (
+	TransactionKindAccrual    = "ACCRUAL"
+	TransactionKindWithdrawal = "WITHDRAWAL"
+)
+
 func checkOrderNumber(orderNumber string) error {
 
 	valid, err := luhn.IsValid(orderNumber)
@@ -96,7 +111,7 @@ func checkOrderNumber(orderNumber string) error {
 	return nil
 }
 
-func (s *balanceSvc) ListUserOrder(ctx context.Context, payload *genBalance.ListUserOrderPayload) (res *genBalance.ListUserOrderResult, err error) {
+func (s *balanceSvc) ListUserOrders(ctx context.Context, payload *genBalance.ListUserOrdersPayload) (res *genBalance.ListUserOrdersResult, err error) {
 
 	ctx, err = s.Auther.JWTAuth(ctx, payload.Authorization, nil)
 	if err != nil {
@@ -113,7 +128,7 @@ func (s *balanceSvc) ListUserOrder(ctx context.Context, payload *genBalance.List
 		return nil, err
 	}
 
-	res = new(genBalance.ListUserOrderResult)
+	res = new(genBalance.ListUserOrdersResult)
 	if ordersByUserID == nil {
 		noOrders := "yes"
 		res.NoOrders = &noOrders
@@ -121,13 +136,251 @@ func (s *balanceSvc) ListUserOrder(ctx context.Context, payload *genBalance.List
 	}
 
 	for _, v := range ordersByUserID {
+		var accrual *float64
+		if v.Accrual.Valid {
+			a := float64(v.Accrual.Int32) / 100
+			accrual = &a
+		}
+
 		userOrder := &genBalance.Order{
 			Number:     v.Number,
 			Status:     v.Status,
 			UploadedAt: v.CreatedAt.Format(time.RFC3339),
+			Accrual:    accrual,
 		}
 		res.Orders = append(res.Orders, userOrder)
 	}
 
 	return res, nil
+}
+
+func (s *balanceSvc) GetUserBalance(ctx context.Context, payload *genBalance.GetUserBalancePayload) (res *genBalance.GetUserBalanceResult, err error) {
+	ctx, err = s.Auther.JWTAuth(ctx, payload.Authorization, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := s.Auther.UserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	userBalance, err := s.Balance.Retrieve(ctx, userID)
+	if err != nil {
+		return &genBalance.GetUserBalanceResult{}, err
+	}
+	return &genBalance.GetUserBalanceResult{
+		Current:   float64((userBalance.Current)) / 100,
+		Withdrawn: float64((userBalance.WithdrawnSum)) / 100,
+	}, nil
+}
+
+func (s *balanceSvc) WithdrawUserBalance(ctx context.Context, payload *genBalance.WithdrawUserBalancePayload) (err error) {
+	loggingCtx := log.With(s.loggingCtx,
+		log.KV{K: "func", V: "WithdrawUserBalance"},
+		log.KV{K: "orderNumber", V: payload.Order},
+	)
+
+	ctx, err = s.Auther.JWTAuth(ctx, payload.Authorization, nil)
+	if err != nil {
+		return err
+	}
+
+	userID, err := s.Auther.UserIDFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := checkOrderNumber(payload.Order); err != nil {
+		return ErrInvalidOrderNumber
+	}
+
+	storageTx, err := s.Balance.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	log.Debugf(loggingCtx, "began storage transaction")
+	orderID, err := storageTx.StoreOrder(ctx, userID, payload.Order, OrderStatusProcessed, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+
+	amount := int32(payload.Sum * 100)
+	currentWithdrawalID, err := storageTx.StoreUserWithdrawal(ctx, userID, orderID, amount)
+	if err != nil {
+		return err
+	}
+
+	userBalance, err := storageTx.Retrieve(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if currentWithdrawalID != userBalance.LastTransactionID.UUID {
+		return ErrCurrentBalanceChanged
+	}
+
+	if userBalance.Current < 0 {
+		return ErrInsufficientFunds
+	}
+
+	storageTx.Tx.Commit()
+	return nil
+}
+
+// ProcessAccruals retrieves accrual orders to process from the storage, fetches their accrual statuses from the accrual system, stores the results if any to the storage
+func (s *balanceSvc) ProcessAccruals(ctx context.Context) error {
+	log.Debugf(s.loggingCtx, "in ProcessAccruals")
+	errCh := make(chan error, 1)
+	s.accrualOrdersToProcess = make(chan uuid.UUID)
+
+	processCtx, cancelProcess := context.WithCancelCause(ctx)
+	defer cancelProcess(nil)
+
+	ticker := time.NewTicker(time.Second)
+
+	errwg, processCtx := errgroup.WithContext(ctx)
+	errwg.Go(func() error {
+		for {
+			select {
+			case <-ticker.C:
+				orderIDs, err := s.RetrieveOrderIDsForAccrual(processCtx)
+				if err != nil {
+					return err
+				}
+				log.Debugf(s.loggingCtx, "retrieved %d order IDs for Accrual", len(orderIDs))
+				s.sendAccrualOrdersToProcess(orderIDs)
+			case <-processCtx.Done():
+				log.Printf(s.loggingCtx, "recieved ctx.Done. Cause: %s", context.Cause(ctx))
+				return context.Cause(ctx)
+			}
+		}
+	})
+
+	errwg.Go(func() error {
+		for {
+			select {
+			case orderID := <-s.accrualOrdersToProcess:
+				log.Debugf(s.loggingCtx, "recieved order ID from accrualOrdersToProcess")
+				ctxProccessAccrual, cancelProcessAccrual := context.WithCancelCause(processCtx)
+				defer cancelProcessAccrual(nil)
+				go func() {
+					err := s.processAccrual(ctxProccessAccrual, orderID)
+					if err != nil {
+						cancelProcessAccrual(err)
+						log.Errorf(s.loggingCtx, err, "error in processing of order ID: [%s]", orderID)
+					}
+				}()
+			case <-processCtx.Done():
+				log.Printf(s.loggingCtx, "recieved ctx.Done. Cause: %s", context.Cause(processCtx))
+				return context.Cause(processCtx)
+			case err := <-errCh:
+				log.Errorf(s.loggingCtx, err, "error from errCh")
+			}
+		}
+	})
+
+	return errwg.Wait()
+}
+
+func (s *balanceSvc) sendAccrualOrdersToProcess(orderIDs []uuid.UUID) error {
+	if s.accrualOrdersToProcess == nil { // guards against no reader on the channel
+		return ErrProcessAccrualsNotStarted
+	}
+
+	for _, orderID := range orderIDs {
+		s.accrualOrdersToProcess <- orderID
+	}
+
+	return nil
+}
+
+// processAccrual retrieves an accrual order to process from the storage, fetches its accrual statuse from the accrual system, stores the result if any to the storage
+func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) error {
+	loggingCtx := log.With(s.loggingCtx,
+		log.KV{K: "func", V: "procceeAccrual"},
+		log.KV{K: "orderID", V: orderID},
+	)
+
+	// ctx, cancel := context.WithTimeout(ctx, 100 * time.Millisecond)
+	// defer cancel()
+	// start storate transaction
+	storageTx, err := s.Balance.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	log.Debugf(loggingCtx, "began storage transaction")
+
+	order, err := storageTx.RetrieveOrderForAccrual(ctx, orderID)
+	if err != nil {
+		return err
+	}
+	log.Debug(loggingCtx, log.KV{K: "msg", V: "retrieved order"}, log.KV{K: "order", V: fmt.Sprintf("%+v", order)})
+
+	if order.Status == OrderStatusProcessed || order.Status == OrderStatusInvalid {
+		log.Warn(loggingCtx,
+			log.KV{K: "msg", V: "return: order is in terminal status."},
+			log.KV{K: "status", V: order.Status})
+		return nil
+	}
+
+	res, err := s.accrual.FetchOrderAccrual(ctx, transport.FetchOrderAccrualPayload{Number: order.Number})
+	if err != nil {
+		return err
+	}
+	log.Debug(loggingCtx,
+		log.KV{K: "msg", V: "fetched order"},
+		log.KV{K: "result", V: fmt.Sprintf("%+v", res)},
+	)
+
+	if res == nil {
+		log.Warnf(loggingCtx, "return: accrual result is nil.")
+		err := storageTx.Tx.Rollback()
+		if err != nil {
+			return err
+		}
+		log.Warnf(loggingCtx, "rolled back storage transaction")
+		return nil
+	}
+
+	orderStatus, err := accrualStatusToOrderStatus(res.Status)
+	if err != nil {
+		return err
+	}
+	log.Debug(loggingCtx, log.KV{K: "msg", V: "convertedAccrualStatus to Order status"}, log.KV{K: "accrualStatus", V: res.Status}, log.KV{K: "orderStatus", V: orderStatus})
+
+	err = storageTx.UpdateOrderStatus(ctx, orderID, orderStatus)
+	if err != nil {
+		return err
+	}
+	log.Debug(loggingCtx, log.KV{K: "msg", V: "updated order status"}, log.KV{K: "orderStatus", V: orderStatus})
+
+	if orderStatus == OrderStatusProcessed && res.Accrual != nil {
+		amount := int32(*res.Accrual * 100)
+		err := storageTx.StoreUserAccrual(ctx, order.UserID, order.ID, amount)
+		if err != nil {
+			return err
+		}
+		log.Debug(loggingCtx, log.KV{K: "msg", V: "stored accrual"}, log.KV{K: "amount", V: amount})
+	}
+
+	err = storageTx.Tx.Commit()
+	if err != nil {
+		return err
+	}
+	log.Debugf(loggingCtx, "commited storage transaction")
+
+	return nil
+}
+
+func accrualStatusToOrderStatus(accrualStatus transport.OrderAccrualStatus) (string, error) {
+	switch accrualStatus {
+	case transport.OrderAccrualStatusRegistered, transport.OrderAccrualStatusProcessing:
+		return OrderStatusProcessing, nil
+	case transport.OrderAccrualStatusInvalid:
+		return OrderStatusInvalid, nil
+	case transport.OrderAccrualStatusProcessed:
+		return OrderStatusProcessed, nil
+	}
+	return "", ErrUnknownAccrualOrderStatus
 }

@@ -6,33 +6,143 @@ servers:
     - url: http://localhost:80
       description: Default server for gophermart
 paths:
-    /api/GET /orders/{number}:
+    /api/user/balance:
         get:
             tags:
-                - accrual
-            summary: GetOrder accrual
-            operationId: accrual#GetOrder
-            parameters:
-                - name: number
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-                    example: Inventore id voluptate dolor sit et inventore.
-                  example: Quis velit dolores at architecto ut qui.
+                - balance
+            summary: GetUserBalance balance
+            description: Get user balance
+            operationId: balance#GetUserBalance
             responses:
                 "200":
                     description: OK response.
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/GetOrderResult'
+                                $ref: '#/components/schemas/GetUserBalanceResponseBody'
                             example:
-                                accrual: 15302489415586696303
-                                order: Est qui accusamus.
-                                status: Ut officia quas minus ab ex quo.
+                                current: 500.5
+                                withdrawn: 42
+                "401":
+                    description: 'missing_field: Missing or empty Authorization header'
+                    headers:
+                        goa-attribute-fault:
+                            description: Is the error a server-side fault?
+                            schema:
+                                type: boolean
+                                description: Is the error a server-side fault?
+                                example: true
+                            example: true
+                        goa-attribute-id:
+                            description: ID is a unique identifier for this particular occurrence of the problem.
+                            schema:
+                                type: string
+                                description: ID is a unique identifier for this particular occurrence of the problem.
+                                example: 123abc
+                            example: 123abc
+                        goa-attribute-message:
+                            description: Message is a human-readable explanation specific to this occurrence of the problem.
+                            schema:
+                                type: string
+                                description: Message is a human-readable explanation specific to this occurrence of the problem.
+                                example: parameter 'p' must be an integer
+                            example: parameter 'p' must be an integer
+                        goa-attribute-name:
+                            description: Name is the name of this class of errors.
+                            schema:
+                                type: string
+                                description: Name is the name of this class of errors.
+                                example: bad_request
+                            example: bad_request
+                        goa-attribute-temporary:
+                            description: Is the error temporary?
+                            schema:
+                                type: boolean
+                                description: Is the error temporary?
+                                example: false
+                            example: true
+                        goa-attribute-timeout:
+                            description: Is the error a timeout?
+                            schema:
+                                type: boolean
+                                description: Is the error a timeout?
+                                example: true
+                            example: true
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
+            security:
+                - jwt_header_Authorization: []
+    /api/user/balance/withdraw:
+        post:
+            tags:
+                - balance
+            summary: WithdrawUserBalance balance
+            operationId: balance#WithdrawUserBalance
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/WithdrawUserBalanceRequestBody'
+                        example:
+                            order: "2377225624"
+                            sum: 751
+            responses:
+                "200":
+                    description: OK response.
+                "401":
+                    description: 'missing_field: Missing or empty Authorization header'
+                    headers:
+                        goa-attribute-fault:
+                            description: Is the error a server-side fault?
+                            schema:
+                                type: boolean
+                                description: Is the error a server-side fault?
+                                example: true
+                            example: false
+                        goa-attribute-id:
+                            description: ID is a unique identifier for this particular occurrence of the problem.
+                            schema:
+                                type: string
+                                description: ID is a unique identifier for this particular occurrence of the problem.
+                                example: 123abc
+                            example: 123abc
+                        goa-attribute-message:
+                            description: Message is a human-readable explanation specific to this occurrence of the problem.
+                            schema:
+                                type: string
+                                description: Message is a human-readable explanation specific to this occurrence of the problem.
+                                example: parameter 'p' must be an integer
+                            example: parameter 'p' must be an integer
+                        goa-attribute-name:
+                            description: Name is the name of this class of errors.
+                            schema:
+                                type: string
+                                description: Name is the name of this class of errors.
+                                example: bad_request
+                            example: bad_request
+                        goa-attribute-temporary:
+                            description: Is the error temporary?
+                            schema:
+                                type: boolean
+                                description: Is the error temporary?
+                                example: true
+                            example: true
+                        goa-attribute-timeout:
+                            description: Is the error a timeout?
+                            schema:
+                                type: boolean
+                                description: Is the error a timeout?
+                                example: true
+                            example: false
+                "402":
+                    description: 'Insufficient funds: Insufficient funds'
+                "422":
+                    description: 'Invalid order number: Invalid order number'
+                "500":
+                    description: 'Internal service error: Internal Server Error response.'
+            security:
+                - jwt_header_Authorization: []
     /api/user/login:
         post:
             tags:
@@ -69,9 +179,9 @@ paths:
         get:
             tags:
                 - balance
-            summary: ListUserOrder balance
+            summary: ListUserOrders balance
             description: List user orders
-            operationId: balance#ListUserOrder
+            operationId: balance#ListUserOrders
             responses:
                 "200":
                     description: OK response.
@@ -113,8 +223,8 @@ paths:
                             schema:
                                 type: boolean
                                 description: Is the error a server-side fault?
-                                example: true
-                            example: false
+                                example: false
+                            example: true
                         goa-attribute-id:
                             description: ID is a unique identifier for this particular occurrence of the problem.
                             schema:
@@ -141,14 +251,14 @@ paths:
                             schema:
                                 type: boolean
                                 description: Is the error temporary?
-                                example: true
-                            example: false
+                                example: false
+                            example: true
                         goa-attribute-timeout:
                             description: Is the error a timeout?
                             schema:
                                 type: boolean
                                 description: Is the error a timeout?
-                                example: false
+                                example: true
                             example: true
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
@@ -187,7 +297,7 @@ paths:
                                 type: boolean
                                 description: Is the error a server-side fault?
                                 example: false
-                            example: true
+                            example: false
                         goa-attribute-id:
                             description: ID is a unique identifier for this particular occurrence of the problem.
                             schema:
@@ -221,8 +331,8 @@ paths:
                             schema:
                                 type: boolean
                                 description: Is the error a timeout?
-                                example: false
-                            example: false
+                                example: true
+                            example: true
                 "409":
                     description: 'The order belongs to another user: The order belongs to another user'
                 "422":
@@ -265,23 +375,25 @@ paths:
                     description: 'Internal service error: Internal Server Error response.'
 components:
     schemas:
-        GetOrderResult:
+        GetUserBalanceResponseBody:
             type: object
             properties:
-                accrual:
-                    type: integer
-                    example: 1002598621345281490
-                    format: int64
-                order:
-                    type: string
-                    example: Ad distinctio.
-                status:
-                    type: string
-                    example: Sint odit provident iure dolor hic eius.
+                current:
+                    type: number
+                    example: 0.32899396434174705
+                    format: double
+                    minimum: 0
+                withdrawn:
+                    type: number
+                    example: 0.4871256396488767
+                    format: double
+                    minimum: 0
             example:
-                accrual: 4255021493176196929
-                order: Saepe molestiae ullam magnam.
-                status: Dignissimos veritatis autem magnam.
+                current: 500.5
+                withdrawn: 42
+            required:
+                - current
+                - withdrawn
         GophermartError:
             type: object
         JWTToken:
@@ -300,10 +412,10 @@ components:
             properties:
                 login:
                     type: string
-                    example: Aut sit aspernatur.
+                    example: Consequatur molestias hic.
                 password:
                     type: string
-                    example: Deleniti ipsam voluptas voluptatem aliquid eos.
+                    example: Ea id voluptate et et maxime.
             example:
                 login: <login>
                 password: <password>
@@ -314,16 +426,17 @@ components:
             type: object
             properties:
                 accrual:
-                    type: integer
-                    example: 7538085325293562822
-                    format: int64
+                    type: number
+                    example: 0.09105482646382859
+                    format: double
+                    exclusiveMinimum: 0
                 number:
                     type: string
-                    example: "50"
+                    example: "470"
                     pattern: '[1-9][0-9]*'
                 status:
                     type: string
-                    example: NEW
+                    example: PROCESSED
                     enum:
                         - NEW
                         - PROCESSING
@@ -331,19 +444,37 @@ components:
                         - PROCESSED
                 uploaded_at:
                     type: string
-                    example: "2002-04-12T17:39:54Z"
+                    example: "2011-09-13T15:10:59Z"
                     format: date-time
             example:
-                accrual: 15054518594174679987
-                number: "43"
-                status: PROCESSED
-                uploaded_at: "1978-02-06T01:59:04Z"
+                accrual: 0.7646343765507841
+                number: "5"
+                status: PROCESSING
+                uploaded_at: "2014-07-08T07:33:40Z"
             required:
                 - number
                 - status
                 - uploaded_at
         PostOrderResult:
             type: object
+        WithdrawUserBalanceRequestBody:
+            type: object
+            properties:
+                order:
+                    type: string
+                    example: "107"
+                    pattern: '[1-9][0-9]*'
+                sum:
+                    type: number
+                    example: 0.941405969468644
+                    format: double
+                    exclusiveMinimum: 0
+            example:
+                order: "2377225624"
+                sum: 751
+            required:
+                - order
+                - sum
     securitySchemes:
         jwt_header_Authorization:
             type: http
@@ -351,5 +482,4 @@ components:
             scheme: bearer
 tags:
     - name: balance
-    - name: accrual
     - name: user

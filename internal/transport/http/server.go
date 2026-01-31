@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	balance "github.com/oleshko-g/oggophermart/internal/gen/balance"
+	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
 	genBalanceHTTPSrv "github.com/oleshko-g/oggophermart/internal/gen/http/balance/server"
 	genUserHTTPSvr "github.com/oleshko-g/oggophermart/internal/gen/http/user/server"
 	user "github.com/oleshko-g/oggophermart/internal/gen/user"
@@ -19,6 +19,7 @@ import (
 
 type Server interface {
 	ListenAndServe() error
+	Shutdown(context.Context) error
 }
 
 type server struct {
@@ -28,7 +29,7 @@ type server struct {
 	Server
 }
 
-func newHandlers(loggingCtx context.Context, balanceEndpoints *balance.Endpoints, userEndpoints *user.Endpoints) http.Handler {
+func newHandlers(loggingCtx context.Context, balanceEndpoints *genBalance.Endpoints, userEndpoints *user.Endpoints) http.Handler {
 	var (
 		reqDecoder func(r *http.Request) goahttp.Decoder
 		resEncoder func(ctx context.Context, res http.ResponseWriter) goahttp.Encoder
@@ -59,13 +60,16 @@ func newHandlers(loggingCtx context.Context, balanceEndpoints *balance.Endpoints
 
 func NewServer(loggingCtx context.Context, cfg Config, svc service.Service) Server {
 	var (
-		balanceEndpoints *balance.Endpoints
+		balanceEndpoints *genBalance.Endpoints
 		userEndpoints    *user.Endpoints
 		handlers         http.Handler
 	)
 	{
-		balanceEndpoints = balance.NewEndpoints(svc.Balance)
+		balanceEndpoints = genBalance.NewEndpoints(svc.Balance)
+		balanceEndpoints.Use(service.WithLogEndpoint)
+
 		userEndpoints = user.NewEndpoints(svc.User)
+
 		handlers = newHandlers(loggingCtx, balanceEndpoints, userEndpoints)
 	}
 
@@ -100,5 +104,3 @@ func errorHandler(ctx context.Context, res http.ResponseWriter, err error) {
 }
 
 var errResponseWithError = errors.New("failed to response with error")
-
-type Client = http.Client

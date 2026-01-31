@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY,
   number TEXT NOT NULL UNIQUE,
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES users(id) on DELETE CASCADE,
   status TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL,
   CONSTRAINT user_id_order_number UNIQUE (user_id, number)

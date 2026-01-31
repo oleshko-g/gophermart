@@ -3,6 +3,7 @@ package db
 
 import (
 	"net/url"
+	"strings"
 
 	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
 )
@@ -19,9 +20,11 @@ func (c *Config) DSN() *dataSource { // revive:disable-line:unexported-return pr
 
 // dataSource represent a valid Data Source
 type dataSource struct {
-	name string
+	_DSN       string
+	DabaseName string
 	DriverName
-	Source string
+	Source  string
+	Default string
 }
 
 // Set parses s and sets [DSN] and [Driver] or returns an error
@@ -38,20 +41,27 @@ func (d *dataSource) Set(s string) error {
 		return err
 	}
 
-	if url.Scheme != string(DriverNamePostgres) && url.Scheme != string(DriverNamePostgreSQL) {
+	if url.Scheme != string(DriverNamePostgres) && url.Scheme != string(driverNamePostgreSQL) {
 		return storageErrors.ErrUnsupportedDataSource
 	}
 
+	d._DSN = url.String()
 	// there's only "postgres" SQL driver
-	d.DriverName = DriverName(DriverNamePostgres)
+	d.DriverName = DriverNamePostgres
 
-	d.name = url.String()
+	databaseName, _ := strings.CutPrefix(url.Path, "/")
+	if databaseName == "" {
+		return storageErrors.ErrMissingDatabaseName
+	}
+	d.DabaseName = databaseName
+
+	d.Default = "postgres://localhost:5432/postgres?sslmode=disable"
 
 	return nil
 }
 
 func (d *dataSource) String() string {
-	return d.name
+	return d._DSN
 }
 
 // DriverName is a valid database driver name
@@ -64,5 +74,5 @@ func (d DriverName) String() string {
 // Supported database drivers
 const (
 	DriverNamePostgres   DriverName = "postgres"
-	DriverNamePostgreSQL DriverName = "postgresql"
+	driverNamePostgreSQL DriverName = "postgresql"
 )
