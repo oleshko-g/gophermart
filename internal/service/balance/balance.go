@@ -228,6 +228,11 @@ func (s *balanceSvc) WithdrawUserBalance(ctx context.Context, payload *genBalanc
 	return nil
 }
 
+// GetWithdrawals returns user's withdrawals or NoWithdrawals flag or an error
+func (s *balanceSvc) GetWithdrawals(ctx context.Context, payload *genBalance.GetWithdrawalsPayload) (res []*genBalance.Withdrawal, err error) {
+	return nil, svcErrors.ErrNotImplemented
+}
+
 // ProcessAccruals retrieves accrual orders to process from the storage, fetches their accrual statuses from the accrual system, stores the results if any to the storage
 func (s *balanceSvc) ProcessAccruals(ctx context.Context) error {
 	log.Debugf(s.loggingCtx, "in ProcessAccruals")

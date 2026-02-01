@@ -143,6 +143,7 @@ var _ = Service("balance", func() {
 			})
 		})
 	})
+	// TODO:  ListUserOrders
 	Method("ListUserOrders", func() {
 		Description("List user orders")
 		Payload(func() {
@@ -296,6 +297,42 @@ var _ = Service("balance", func() {
 			})
 		})
 	})
+	// TODO:  GetWithdrawals
+	Method("GetWithdrawals", func() {
+		Payload(func() {
+			Token("Authorization", String, "A JWT token used to authenticate a request", func() {
+				Example(func() {
+					Value("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30")
+				})
+			})
+			Required("Authorization")
+		})
+		Result(ArrayOf(Withdrawal))
+		HTTP(func() {
+			GET("/user/withdrawals")
+			Response(StatusOK)
+			Response(StatusNoContent, func() {
+				Body(Empty)
+			})
+			Response("Invalid input parameter", StatusBadRequest, func() {
+				Body(Empty)
+			})
+			Response("User is not authenticated", StatusUnauthorized, func() {
+				Description("User is not authenticated")
+				Body(Empty)
+			})
+			Response("missing_field", StatusUnauthorized, func() {
+				Description("Missing or empty Authorization header")
+				Body(Empty)
+			})
+			Response("Internal service error", StatusInternalServerError, func() {
+				Body(Empty)
+			})
+			Response("Not implemented", StatusNotImplemented, func() {
+				Body(Empty)
+			})
+		})
+	})
 })
 
 var UploadUserOrderResult = Type("PostOrderResult", func() {
@@ -366,4 +403,14 @@ var Order = Type("Order", func() {
 var OrderNumber = Type("OrderNumber", String, func() {
 	Description("Unique user order number")
 	Pattern("[1-9][0-9]*")
+})
+
+var Withdrawal = Type("Withdrawal", func() {
+	Attribute("order", OrderNumber)
+	Attribute("sum", Float64, func() {
+		ExclusiveMinimum(0)
+	})
+	Attribute("processed_at", String, func() {
+		Format(FormatDateTime)
+	})
 })
