@@ -7,23 +7,25 @@ package sql
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 const insertBalanceTransaction = `-- name: InsertBalanceTransaction :exec
 INSERT INTO
-  transactions (id, user_id, order_id, kind, amount)
+  transactions (id, user_id, order_id, kind, amount, created_at)
 VALUES
-  ($1, $2, $3, $4, $5)
+  ($1, $2, $3, $4, $5, $6)
 `
 
 type InsertBalanceTransactionParams struct {
-	ID      uuid.UUID
-	UserID  uuid.UUID
-	OrderID uuid.UUID
-	Kind    string
-	Amount  int32
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	OrderID   uuid.UUID
+	Kind      string
+	Amount    int32
+	CreatedAt time.Time
 }
 
 func (q *Queries) InsertBalanceTransaction(ctx context.Context, arg InsertBalanceTransactionParams) error {
@@ -33,6 +35,7 @@ func (q *Queries) InsertBalanceTransaction(ctx context.Context, arg InsertBalanc
 		arg.OrderID,
 		arg.Kind,
 		arg.Amount,
+		arg.CreatedAt,
 	)
 	return err
 }

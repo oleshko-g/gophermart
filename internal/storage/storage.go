@@ -44,6 +44,7 @@ type Balance interface {
 	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error
 	StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, amount int32) error
 	StoreUserWithdrawal(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, amount int32) (withdrawalID uuid.UUID, err error)
+	RetrieveUserWithdrawals(ctx context.Context, userID uuid.UUID) (withdrawals []genDBSQL.SelectBalanceOrderTransactionAmountByUserIDAndKindRow, err error)
 }
 
 type Transaction interface {

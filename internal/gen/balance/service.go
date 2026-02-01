@@ -24,6 +24,8 @@ type Service interface {
 	GetUserBalance(context.Context, *GetUserBalancePayload) (res *GetUserBalanceResult, err error)
 	// WithdrawUserBalance implements WithdrawUserBalance.
 	WithdrawUserBalance(context.Context, *WithdrawUserBalancePayload) (err error)
+	// GetWithdrawals implements GetWithdrawals.
+	GetWithdrawals(context.Context, *GetWithdrawalsPayload) (res *GetWithdrawalsResult, err error)
 }
 
 // Auther defines the authorization functions to be implemented by the service.
@@ -46,7 +48,7 @@ const ServiceName = "balance"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [4]string{"UploadUserOrder", "ListUserOrders", "GetUserBalance", "WithdrawUserBalance"}
+var MethodNames = [5]string{"UploadUserOrder", "ListUserOrders", "GetUserBalance", "WithdrawUserBalance", "GetWithdrawals"}
 
 // GetUserBalancePayload is the payload type of the balance service
 // GetUserBalance method.
@@ -60,6 +62,20 @@ type GetUserBalancePayload struct {
 type GetUserBalanceResult struct {
 	Current   float64
 	Withdrawn float64
+}
+
+// GetWithdrawalsPayload is the payload type of the balance service
+// GetWithdrawals method.
+type GetWithdrawalsPayload struct {
+	// A JWT token used to authenticate a request
+	Authorization string
+}
+
+// GetWithdrawalsResult is the result type of the balance service
+// GetWithdrawals method.
+type GetWithdrawalsResult struct {
+	Withdrawals []*Withdrawal
+	NoResult    *string
 }
 
 // ListUserOrdersPayload is the payload type of the balance service
@@ -83,6 +99,9 @@ type Order struct {
 	UploadedAt string
 }
 
+// Unique user order number
+type OrderNumber string
+
 // UploadUserOrderPayload is the payload type of the balance service
 // UploadUserOrder method.
 type UploadUserOrderPayload struct {
@@ -105,6 +124,12 @@ type WithdrawUserBalancePayload struct {
 	Authorization string
 	Order         string
 	Sum           float64
+}
+
+type Withdrawal struct {
+	Order       *OrderNumber
+	Sum         *float64
+	ProcessedAt *string
 }
 
 // MakeMissingField builds a goa.ServiceError from an error.

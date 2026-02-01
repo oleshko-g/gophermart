@@ -23,6 +23,7 @@ type Server struct {
 	ListUserOrders      http.Handler
 	GetUserBalance      http.Handler
 	WithdrawUserBalance http.Handler
+	GetWithdrawals      http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -56,11 +57,13 @@ func New(
 			{"ListUserOrders", "GET", "/api/user/orders"},
 			{"GetUserBalance", "GET", "/api/user/balance"},
 			{"WithdrawUserBalance", "POST", "/api/user/balance/withdraw"},
+			{"GetWithdrawals", "GET", "/api/user/withdrawals"},
 		},
 		UploadUserOrder:     NewUploadUserOrderHandler(e.UploadUserOrder, mux, decoder, encoder, errhandler, formatter),
 		ListUserOrders:      NewListUserOrdersHandler(e.ListUserOrders, mux, decoder, encoder, errhandler, formatter),
 		GetUserBalance:      NewGetUserBalanceHandler(e.GetUserBalance, mux, decoder, encoder, errhandler, formatter),
 		WithdrawUserBalance: NewWithdrawUserBalanceHandler(e.WithdrawUserBalance, mux, decoder, encoder, errhandler, formatter),
+		GetWithdrawals:      NewGetWithdrawalsHandler(e.GetWithdrawals, mux, decoder, encoder, errhandler, formatter),
 	}
 }
 
@@ -73,6 +76,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.ListUserOrders = m(s.ListUserOrders)
 	s.GetUserBalance = m(s.GetUserBalance)
 	s.WithdrawUserBalance = m(s.WithdrawUserBalance)
+	s.GetWithdrawals = m(s.GetWithdrawals)
 }
 
 // MethodNames returns the methods served.
@@ -84,6 +88,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountListUserOrdersHandler(mux, h.ListUserOrders)
 	MountGetUserBalanceHandler(mux, h.GetUserBalance)
 	MountWithdrawUserBalanceHandler(mux, h.WithdrawUserBalance)
+	MountGetWithdrawalsHandler(mux, h.GetWithdrawals)
 }
 
 // Mount configures the mux to serve the balance endpoints.
@@ -280,6 +285,59 @@ func NewWithdrawUserBalanceHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "WithdrawUserBalance")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "balance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountGetWithdrawalsHandler configures the mux to serve the "balance" service
+// "GetWithdrawals" endpoint.
+func MountGetWithdrawalsHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/user/withdrawals", f)
+}
+
+// NewGetWithdrawalsHandler creates a HTTP handler which loads the HTTP request
+// and calls the "balance" service "GetWithdrawals" endpoint.
+func NewGetWithdrawalsHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeGetWithdrawalsRequest(mux, decoder)
+		encodeResponse = EncodeGetWithdrawalsResponse(encoder)
+		encodeError    = EncodeGetWithdrawalsError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "GetWithdrawals")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "balance")
 		payload, err := decodeRequest(r)
 		if err != nil {

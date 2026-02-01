@@ -20,6 +20,7 @@ type Endpoints struct {
 	ListUserOrders      goa.Endpoint
 	GetUserBalance      goa.Endpoint
 	WithdrawUserBalance goa.Endpoint
+	GetWithdrawals      goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "balance" service with endpoints.
@@ -31,6 +32,7 @@ func NewEndpoints(s Service) *Endpoints {
 		ListUserOrders:      NewListUserOrdersEndpoint(s, a.JWTAuth),
 		GetUserBalance:      NewGetUserBalanceEndpoint(s, a.JWTAuth),
 		WithdrawUserBalance: NewWithdrawUserBalanceEndpoint(s, a.JWTAuth),
+		GetWithdrawals:      NewGetWithdrawalsEndpoint(s, a.JWTAuth),
 	}
 }
 
@@ -40,6 +42,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.ListUserOrders = m(e.ListUserOrders)
 	e.GetUserBalance = m(e.GetUserBalance)
 	e.WithdrawUserBalance = m(e.WithdrawUserBalance)
+	e.GetWithdrawals = m(e.GetWithdrawals)
 }
 
 // NewUploadUserOrderEndpoint returns an endpoint function that calls the
@@ -115,5 +118,24 @@ func NewWithdrawUserBalanceEndpoint(s Service, authJWTFn security.AuthJWTFunc) g
 			return nil, err
 		}
 		return nil, s.WithdrawUserBalance(ctx, p)
+	}
+}
+
+// NewGetWithdrawalsEndpoint returns an endpoint function that calls the method
+// "GetWithdrawals" of service "balance".
+func NewGetWithdrawalsEndpoint(s Service, authJWTFn security.AuthJWTFunc) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*GetWithdrawalsPayload)
+		var err error
+		sc := security.JWTScheme{
+			Name:           "jwt",
+			Scopes:         []string{},
+			RequiredScopes: []string{},
+		}
+		ctx, err = authJWTFn(ctx, p.Authorization, &sc)
+		if err != nil {
+			return nil, err
+		}
+		return s.GetWithdrawals(ctx, p)
 	}
 }

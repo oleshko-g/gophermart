@@ -233,6 +233,7 @@ func (s *Storage) StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderI
 		UserID:  userID,
 		OrderID: orderID,
 		Amount:  amount,
+		CreatedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return err
@@ -254,12 +255,29 @@ func (s *Storage) StoreUserWithdrawal(ctx context.Context, userID uuid.UUID, ord
 		UserID:  userID,
 		OrderID: orderID,
 		Amount:  amount,
+		CreatedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
 	return newTransactionID, nil
+}
+
+func (s *Storage) RetrieveUserWithdrawals(ctx context.Context, userID uuid.UUID) (withdrawals []genDBSQL.SelectBalanceOrderTransactionAmountByUserIDAndKindRow, err error) {
+	withdrawals, err = s.queries.SelectBalanceOrderTransactionAmountByUserIDAndKind(ctx, genDBSQL.SelectBalanceOrderTransactionAmountByUserIDAndKindParams{
+		UserID: userID,
+		Kind:   schema.TransactionKindWithdrawal,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if withdrawals == nil {
+		return nil, storageErrors.ErrNotFound
+	}
+
+	return withdrawals, nil
 }
 
 type Tx struct {

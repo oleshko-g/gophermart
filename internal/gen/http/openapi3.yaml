@@ -32,7 +32,7 @@ paths:
                                 type: boolean
                                 description: Is the error a server-side fault?
                                 example: true
-                            example: true
+                            example: false
                         goa-attribute-id:
                             description: ID is a unique identifier for this particular occurrence of the problem.
                             schema:
@@ -66,8 +66,8 @@ paths:
                             schema:
                                 type: boolean
                                 description: Is the error a timeout?
-                                example: true
-                            example: true
+                                example: false
+                            example: false
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
             security:
@@ -98,8 +98,8 @@ paths:
                             schema:
                                 type: boolean
                                 description: Is the error a server-side fault?
-                                example: true
-                            example: false
+                                example: false
+                            example: true
                         goa-attribute-id:
                             description: ID is a unique identifier for this particular occurrence of the problem.
                             schema:
@@ -251,15 +251,15 @@ paths:
                             schema:
                                 type: boolean
                                 description: Is the error temporary?
-                                example: false
-                            example: true
+                                example: true
+                            example: false
                         goa-attribute-timeout:
                             description: Is the error a timeout?
                             schema:
                                 type: boolean
                                 description: Is the error a timeout?
-                                example: true
-                            example: true
+                                example: false
+                            example: false
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
             security:
@@ -296,8 +296,8 @@ paths:
                             schema:
                                 type: boolean
                                 description: Is the error a server-side fault?
-                                example: false
-                            example: false
+                                example: true
+                            example: true
                         goa-attribute-id:
                             description: ID is a unique identifier for this particular occurrence of the problem.
                             schema:
@@ -324,15 +324,15 @@ paths:
                             schema:
                                 type: boolean
                                 description: Is the error temporary?
-                                example: false
-                            example: false
+                                example: true
+                            example: true
                         goa-attribute-timeout:
                             description: Is the error a timeout?
                             schema:
                                 type: boolean
                                 description: Is the error a timeout?
-                                example: true
-                            example: true
+                                example: false
+                            example: false
                 "409":
                     description: 'The order belongs to another user: The order belongs to another user'
                 "422":
@@ -373,6 +373,90 @@ paths:
                     description: 'Login is taken already: Login is taken already'
                 "500":
                     description: 'Internal service error: Internal Server Error response.'
+    /api/user/withdrawals:
+        get:
+            tags:
+                - balance
+            summary: GetWithdrawals balance
+            operationId: balance#GetWithdrawals
+            responses:
+                "200":
+                    description: OK response.
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Withdrawal'
+                                example:
+                                    - order: "946"
+                                      processed_at: "1985-11-22T12:53:11Z"
+                                      sum: 0.40540135764177376
+                                    - order: "946"
+                                      processed_at: "1985-11-22T12:53:11Z"
+                                      sum: 0.40540135764177376
+                            example:
+                                - order: "946"
+                                  processed_at: "1985-11-22T12:53:11Z"
+                                  sum: 0.40540135764177376
+                                - order: "946"
+                                  processed_at: "1985-11-22T12:53:11Z"
+                                  sum: 0.40540135764177376
+                "204":
+                    description: User has no withdrawals
+                "400":
+                    description: 'Invalid input parameter: Bad Request response.'
+                "401":
+                    description: 'missing_field: Missing or empty Authorization header'
+                    headers:
+                        goa-attribute-fault:
+                            description: Is the error a server-side fault?
+                            schema:
+                                type: boolean
+                                description: Is the error a server-side fault?
+                                example: false
+                            example: false
+                        goa-attribute-id:
+                            description: ID is a unique identifier for this particular occurrence of the problem.
+                            schema:
+                                type: string
+                                description: ID is a unique identifier for this particular occurrence of the problem.
+                                example: 123abc
+                            example: 123abc
+                        goa-attribute-message:
+                            description: Message is a human-readable explanation specific to this occurrence of the problem.
+                            schema:
+                                type: string
+                                description: Message is a human-readable explanation specific to this occurrence of the problem.
+                                example: parameter 'p' must be an integer
+                            example: parameter 'p' must be an integer
+                        goa-attribute-name:
+                            description: Name is the name of this class of errors.
+                            schema:
+                                type: string
+                                description: Name is the name of this class of errors.
+                                example: bad_request
+                            example: bad_request
+                        goa-attribute-temporary:
+                            description: Is the error temporary?
+                            schema:
+                                type: boolean
+                                description: Is the error temporary?
+                                example: true
+                            example: true
+                        goa-attribute-timeout:
+                            description: Is the error a timeout?
+                            schema:
+                                type: boolean
+                                description: Is the error a timeout?
+                                example: false
+                            example: false
+                "500":
+                    description: 'Internal service error: Internal Server Error response.'
+                "501":
+                    description: 'Not implemented: Not Implemented response.'
+            security:
+                - jwt_header_Authorization: []
 components:
     schemas:
         GetUserBalanceResponseBody:
@@ -380,12 +464,12 @@ components:
             properties:
                 current:
                     type: number
-                    example: 0.32899396434174705
+                    example: 0.44108522507262227
                     format: double
                     minimum: 0
                 withdrawn:
                     type: number
-                    example: 0.4871256396488767
+                    example: 0.44153550919667955
                     format: double
                     minimum: 0
             example:
@@ -412,10 +496,10 @@ components:
             properties:
                 login:
                     type: string
-                    example: Consequatur molestias hic.
+                    example: Ut eum id laudantium dolorem laborum.
                 password:
                     type: string
-                    example: Ea id voluptate et et maxime.
+                    example: Quia expedita maiores accusantium nam ullam.
             example:
                 login: <login>
                 password: <password>
@@ -427,16 +511,16 @@ components:
             properties:
                 accrual:
                     type: number
-                    example: 0.09105482646382859
+                    example: 0.6150206755975288
                     format: double
                     exclusiveMinimum: 0
                 number:
                     type: string
-                    example: "470"
+                    example: "95"
                     pattern: '[1-9][0-9]*'
                 status:
                     type: string
-                    example: PROCESSED
+                    example: PROCESSING
                     enum:
                         - NEW
                         - PROCESSING
@@ -444,13 +528,13 @@ components:
                         - PROCESSED
                 uploaded_at:
                     type: string
-                    example: "2011-09-13T15:10:59Z"
+                    example: "2006-02-11T11:12:31Z"
                     format: date-time
             example:
-                accrual: 0.7646343765507841
-                number: "5"
-                status: PROCESSING
-                uploaded_at: "2014-07-08T07:33:40Z"
+                accrual: 0.6368016753643319
+                number: "566"
+                status: INVALID
+                uploaded_at: "2014-06-07T05:18:12Z"
             required:
                 - number
                 - status
@@ -462,11 +546,11 @@ components:
             properties:
                 order:
                     type: string
-                    example: "107"
+                    example: "48"
                     pattern: '[1-9][0-9]*'
                 sum:
                     type: number
-                    example: 0.941405969468644
+                    example: 0.9518688666761115
                     format: double
                     exclusiveMinimum: 0
             example:
@@ -475,6 +559,27 @@ components:
             required:
                 - order
                 - sum
+        Withdrawal:
+            type: object
+            properties:
+                order:
+                    type: string
+                    description: Unique user order number
+                    example: "3"
+                    pattern: '[1-9][0-9]*'
+                processed_at:
+                    type: string
+                    example: "1978-10-18T10:26:38Z"
+                    format: date-time
+                sum:
+                    type: number
+                    example: 0.8345306465793881
+                    format: double
+                    exclusiveMinimum: 0
+            example:
+                order: "946"
+                processed_at: "1999-03-29T17:39:11Z"
+                sum: 0.6893665961426662
     securitySchemes:
         jwt_header_Authorization:
             type: http

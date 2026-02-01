@@ -19,15 +19,17 @@ type Client struct {
 	ListUserOrdersEndpoint      goa.Endpoint
 	GetUserBalanceEndpoint      goa.Endpoint
 	WithdrawUserBalanceEndpoint goa.Endpoint
+	GetWithdrawalsEndpoint      goa.Endpoint
 }
 
 // NewClient initializes a "balance" service client given the endpoints.
-func NewClient(uploadUserOrder, listUserOrders, getUserBalance, withdrawUserBalance goa.Endpoint) *Client {
+func NewClient(uploadUserOrder, listUserOrders, getUserBalance, withdrawUserBalance, getWithdrawals goa.Endpoint) *Client {
 	return &Client{
 		UploadUserOrderEndpoint:     uploadUserOrder,
 		ListUserOrdersEndpoint:      listUserOrders,
 		GetUserBalanceEndpoint:      getUserBalance,
 		WithdrawUserBalanceEndpoint: withdrawUserBalance,
+		GetWithdrawalsEndpoint:      getWithdrawals,
 	}
 }
 
@@ -99,4 +101,21 @@ func (c *Client) GetUserBalance(ctx context.Context, p *GetUserBalancePayload) (
 func (c *Client) WithdrawUserBalance(ctx context.Context, p *WithdrawUserBalancePayload) (err error) {
 	_, err = c.WithdrawUserBalanceEndpoint(ctx, p)
 	return
+}
+
+// GetWithdrawals calls the "GetWithdrawals" endpoint of the "balance" service.
+// GetWithdrawals may return the following errors:
+//   - "Invalid input parameter" (type *service.GophermartError)
+//   - "User is not authenticated" (type *service.GophermartError)
+//   - "Internal service error" (type *service.GophermartError)
+//   - "Not implemented" (type *service.GophermartError)
+//   - "missing_field" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) GetWithdrawals(ctx context.Context, p *GetWithdrawalsPayload) (res *GetWithdrawalsResult, err error) {
+	var ires any
+	ires, err = c.GetWithdrawalsEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*GetWithdrawalsResult), nil
 }

@@ -280,6 +280,58 @@ paths:
                     description: Internal Server Error response.
             schemes:
                 - http
+    /user/withdrawals:
+        get:
+            tags:
+                - balance
+            summary: GetWithdrawals balance
+            operationId: balance#GetWithdrawals
+            parameters:
+                - name: Authorization
+                  in: header
+                  description: A JWT token used to authenticate a request
+                  required: true
+                  type: string
+            responses:
+                "200":
+                    description: OK response.
+                    schema:
+                        type: array
+                        items:
+                            $ref: '#/definitions/Withdrawal'
+                "204":
+                    description: User has no withdrawals
+                "400":
+                    description: Bad Request response.
+                "401":
+                    description: Missing or empty Authorization header
+                    headers:
+                        goa-attribute-fault:
+                            description: Is the error a server-side fault?
+                            type: boolean
+                        goa-attribute-id:
+                            description: ID is a unique identifier for this particular occurrence of the problem.
+                            type: string
+                        goa-attribute-message:
+                            description: Message is a human-readable explanation specific to this occurrence of the problem.
+                            type: string
+                        goa-attribute-name:
+                            description: Name is the name of this class of errors.
+                            type: string
+                        goa-attribute-temporary:
+                            description: Is the error temporary?
+                            type: boolean
+                        goa-attribute-timeout:
+                            description: Is the error a timeout?
+                            type: boolean
+                "500":
+                    description: Internal Server Error response.
+                "501":
+                    description: Not Implemented response.
+            schemes:
+                - http
+            security:
+                - jwt_header_Authorization: []
 definitions:
     BalanceGetUserBalanceResponseBody:
         title: BalanceGetUserBalanceResponseBody
@@ -287,12 +339,12 @@ definitions:
         properties:
             current:
                 type: number
-                example: 0.6906347392081525
+                example: 0.632111522408537
                 format: double
                 minimum: 0
             withdrawn:
                 type: number
-                example: 0.45893423780644904
+                example: 0.4321690176467999
                 format: double
                 minimum: 0
         example:
@@ -307,11 +359,11 @@ definitions:
         properties:
             order:
                 type: string
-                example: "21"
+                example: "129"
                 pattern: '[1-9][0-9]*'
             sum:
                 type: number
-                example: 0.16815006795855683
+                example: 0.18044734170140514
                 format: double
                 exclusiveMinimum: 0
         example:
@@ -330,10 +382,10 @@ definitions:
         properties:
             login:
                 type: string
-                example: Aut recusandae laboriosam.
+                example: Corrupti tempora.
             password:
                 type: string
-                example: Alias tempora neque iure quibusdam necessitatibus mollitia.
+                example: Odio cupiditate voluptatem ullam voluptatibus.
         example:
             login: <login>
             password: <password>
@@ -346,16 +398,16 @@ definitions:
         properties:
             accrual:
                 type: number
-                example: 0.35554527589053475
+                example: 0.7063003793160709
                 format: double
                 exclusiveMinimum: 0
             number:
                 type: string
-                example: "664"
+                example: "7"
                 pattern: '[1-9][0-9]*'
             status:
                 type: string
-                example: NEW
+                example: INVALID
                 enum:
                     - NEW
                     - PROCESSING
@@ -363,17 +415,38 @@ definitions:
                     - PROCESSED
             uploaded_at:
                 type: string
-                example: "2013-10-10T20:18:25Z"
+                example: "2013-11-28T07:13:27Z"
                 format: date-time
         example:
-            accrual: 0.6631048812052652
-            number: "51"
+            accrual: 0.817587073945762
+            number: "16"
             status: PROCESSING
-            uploaded_at: "1995-09-20T18:24:58Z"
+            uploaded_at: "2002-07-02T04:00:32Z"
         required:
             - number
             - status
             - uploaded_at
+    Withdrawal:
+        title: Withdrawal
+        type: object
+        properties:
+            order:
+                type: string
+                example: "3"
+                pattern: '[1-9][0-9]*'
+            processed_at:
+                type: string
+                example: "1971-11-03T09:32:57Z"
+                format: date-time
+            sum:
+                type: number
+                example: 0.3222794260571369
+                format: double
+                exclusiveMinimum: 0
+        example:
+            order: "7"
+            processed_at: "1977-03-16T23:23:31Z"
+            sum: 0.785491523493923
 securityDefinitions:
     jwt_header_Authorization:
         type: apiKey
