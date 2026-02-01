@@ -463,7 +463,11 @@ func EncodeWithdrawUserBalanceError(encoder func(context.Context, http.ResponseW
 // the balance GetWithdrawals endpoint.
 func EncodeGetWithdrawalsResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res, _ := v.([]*balance.Withdrawal)
+		res, _ := v.(*balance.GetWithdrawalsResult)
+		if res.NoResult != nil && *res.NoResult == "true" {
+			w.WriteHeader(http.StatusNoContent)
+			return nil
+		}
 		enc := encoder(ctx, w)
 		body := NewGetWithdrawalsResponseBody(res)
 		w.WriteHeader(http.StatusOK)
@@ -574,10 +578,10 @@ func marshalBalanceOrderToOrder(v *balance.Order) *Order {
 	return res
 }
 
-// marshalBalanceWithdrawalToWithdrawalResponse builds a value of type
-// *WithdrawalResponse from a value of type *balance.Withdrawal.
-func marshalBalanceWithdrawalToWithdrawalResponse(v *balance.Withdrawal) *WithdrawalResponse {
-	res := &WithdrawalResponse{
+// marshalBalanceWithdrawalToWithdrawal builds a value of type *Withdrawal from
+// a value of type *balance.Withdrawal.
+func marshalBalanceWithdrawalToWithdrawal(v *balance.Withdrawal) *Withdrawal {
+	res := &Withdrawal{
 		Sum:         v.Sum,
 		ProcessedAt: v.ProcessedAt,
 	}

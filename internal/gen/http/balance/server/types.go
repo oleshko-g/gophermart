@@ -33,7 +33,7 @@ type GetUserBalanceResponseBody struct {
 
 // GetWithdrawalsResponseBody is the type of the "balance" service
 // "GetWithdrawals" endpoint HTTP response body.
-type GetWithdrawalsResponseBody []*WithdrawalResponse
+type GetWithdrawalsResponseBody []*Withdrawal
 
 // WithdrawUserBalanceUserIsNotAuthenticatedResponseBody is the type of the
 // "balance" service "WithdrawUserBalance" endpoint HTTP response body for the
@@ -51,8 +51,8 @@ type Order struct {
 	UploadedAt string   `form:"uploaded_at" json:"uploaded_at" xml:"uploaded_at"`
 }
 
-// WithdrawalResponse is used to define fields on response body types.
-type WithdrawalResponse struct {
+// Withdrawal is used to define fields on response body types.
+type Withdrawal struct {
 	Order       *string  `form:"order,omitempty" json:"order,omitempty" xml:"order,omitempty"`
 	Sum         *float64 `form:"sum,omitempty" json:"sum,omitempty" xml:"sum,omitempty"`
 	ProcessedAt *string  `form:"processed_at,omitempty" json:"processed_at,omitempty" xml:"processed_at,omitempty"`
@@ -84,14 +84,14 @@ func NewGetUserBalanceResponseBody(res *balance.GetUserBalanceResult) *GetUserBa
 
 // NewGetWithdrawalsResponseBody builds the HTTP response body from the result
 // of the "GetWithdrawals" endpoint of the "balance" service.
-func NewGetWithdrawalsResponseBody(res []*balance.Withdrawal) GetWithdrawalsResponseBody {
-	body := make([]*WithdrawalResponse, len(res))
-	for i, val := range res {
+func NewGetWithdrawalsResponseBody(res *balance.GetWithdrawalsResult) GetWithdrawalsResponseBody {
+	body := make([]*Withdrawal, len(res.Withdrawals))
+	for i, val := range res.Withdrawals {
 		if val == nil {
 			body[i] = nil
 			continue
 		}
-		body[i] = marshalBalanceWithdrawalToWithdrawalResponse(val)
+		body[i] = marshalBalanceWithdrawalToWithdrawal(val)
 	}
 	return body
 }

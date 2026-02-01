@@ -300,7 +300,7 @@ paths:
                         items:
                             $ref: '#/definitions/Withdrawal'
                 "204":
-                    description: No Content response.
+                    description: User has no withdrawals
                 "400":
                     description: Bad Request response.
                 "401":
@@ -339,12 +339,12 @@ definitions:
         properties:
             current:
                 type: number
-                example: 0.1636243197511799
+                example: 0.632111522408537
                 format: double
                 minimum: 0
             withdrawn:
                 type: number
-                example: 0.6846003549011602
+                example: 0.4321690176467999
                 format: double
                 minimum: 0
         example:
@@ -359,11 +359,11 @@ definitions:
         properties:
             order:
                 type: string
-                example: "6"
+                example: "129"
                 pattern: '[1-9][0-9]*'
             sum:
                 type: number
-                example: 0.19312105880050517
+                example: 0.18044734170140514
                 format: double
                 exclusiveMinimum: 0
         example:
@@ -382,10 +382,10 @@ definitions:
         properties:
             login:
                 type: string
-                example: Nemo iure.
+                example: Corrupti tempora.
             password:
                 type: string
-                example: Corrupti consequatur voluptatibus et quas eos corrupti.
+                example: Odio cupiditate voluptatem ullam voluptatibus.
         example:
             login: <login>
             password: <password>
@@ -398,16 +398,16 @@ definitions:
         properties:
             accrual:
                 type: number
-                example: 0.11589214984605709
+                example: 0.7063003793160709
                 format: double
                 exclusiveMinimum: 0
             number:
                 type: string
-                example: "8"
+                example: "7"
                 pattern: '[1-9][0-9]*'
             status:
                 type: string
-                example: NEW
+                example: INVALID
                 enum:
                     - NEW
                     - PROCESSING
@@ -415,13 +415,13 @@ definitions:
                     - PROCESSED
             uploaded_at:
                 type: string
-                example: "2007-05-11T01:08:30Z"
+                example: "2013-11-28T07:13:27Z"
                 format: date-time
         example:
-            accrual: 0.16542492387990582
-            number: "1"
-            status: PROCESSED
-            uploaded_at: "2010-12-19T20:50:41Z"
+            accrual: 0.817587073945762
+            number: "16"
+            status: PROCESSING
+            uploaded_at: "2002-07-02T04:00:32Z"
         required:
             - number
             - status
@@ -432,21 +432,21 @@ definitions:
         properties:
             order:
                 type: string
-                example: "75"
+                example: "3"
                 pattern: '[1-9][0-9]*'
             processed_at:
                 type: string
-                example: "2011-02-17T09:39:33Z"
+                example: "1971-11-03T09:32:57Z"
                 format: date-time
             sum:
                 type: number
-                example: 0.9912365268924501
+                example: 0.3222794260571369
                 format: double
                 exclusiveMinimum: 0
         example:
-            order: "176"
-            processed_at: "2013-01-10T15:11:47Z"
-            sum: 0.2754671147174297
+            order: "7"
+            processed_at: "1977-03-16T23:23:31Z"
+            sum: 0.785491523493923
 securityDefinitions:
     jwt_header_Authorization:
         type: apiKey

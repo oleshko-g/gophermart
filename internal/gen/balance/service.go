@@ -25,7 +25,7 @@ type Service interface {
 	// WithdrawUserBalance implements WithdrawUserBalance.
 	WithdrawUserBalance(context.Context, *WithdrawUserBalancePayload) (err error)
 	// GetWithdrawals implements GetWithdrawals.
-	GetWithdrawals(context.Context, *GetWithdrawalsPayload) (res []*Withdrawal, err error)
+	GetWithdrawals(context.Context, *GetWithdrawalsPayload) (res *GetWithdrawalsResult, err error)
 }
 
 // Auther defines the authorization functions to be implemented by the service.
@@ -69,6 +69,13 @@ type GetUserBalanceResult struct {
 type GetWithdrawalsPayload struct {
 	// A JWT token used to authenticate a request
 	Authorization string
+}
+
+// GetWithdrawalsResult is the result type of the balance service
+// GetWithdrawals method.
+type GetWithdrawalsResult struct {
+	Withdrawals []*Withdrawal
+	NoResult    *string
 }
 
 // ListUserOrdersPayload is the payload type of the balance service

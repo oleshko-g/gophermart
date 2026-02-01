@@ -307,11 +307,18 @@ var _ = Service("balance", func() {
 			})
 			Required("Authorization")
 		})
-		Result(ArrayOf(Withdrawal))
+		Result(func() {
+			Attribute("withdrawals", ArrayOf(Withdrawal))
+			Attribute("NoResult")
+		})
 		HTTP(func() {
 			GET("/user/withdrawals")
-			Response(StatusOK)
+			Response(StatusOK, func() {
+				Body("withdrawals")
+			})
 			Response(StatusNoContent, func() {
+				Tag("NoResult", "true")
+				Description("User has no withdrawals")
 				Body(Empty)
 			})
 			Response("Invalid input parameter", StatusBadRequest, func() {
@@ -413,4 +420,11 @@ var Withdrawal = Type("Withdrawal", func() {
 	Attribute("processed_at", String, func() {
 		Format(FormatDateTime)
 	})
+})
+
+var NoResult = Type("NoResult", String, func() {
+	Meta("struct:tag:json", "-")
+	Meta("openapi:generate", "false")
+	Meta("openapi:example", "false")
+	Meta("struct:field:type", "string")
 })

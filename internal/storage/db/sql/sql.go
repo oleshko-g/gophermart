@@ -262,6 +262,16 @@ func (s *Storage) StoreUserWithdrawal(ctx context.Context, userID uuid.UUID, ord
 	return newTransactionID, nil
 }
 
+func (s *Storage) RetrieveUserWithdrawals(ctx context.Context, userID uuid.UUID) (withdrawals []any, err error) {
+	err = sql.ErrNoRows
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, storageErrors.ErrNotFound
+		}
+	}
+	return nil, nil
+}
+
 type Tx struct {
 	*storage.Tx
 	*storage.Storage

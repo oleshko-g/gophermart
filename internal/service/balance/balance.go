@@ -228,14 +228,42 @@ func (s *balanceSvc) WithdrawUserBalance(ctx context.Context, payload *genBalanc
 	return nil
 }
 
-// GetWithdrawals returns user's withdrawals or NoWithdrawals flag or an error
-func (s *balanceSvc) GetWithdrawals(ctx context.Context, payload *genBalance.GetWithdrawalsPayload) (res []*genBalance.Withdrawal, err error) {
+// &GetWithdrawals returns user's withdrawals or NoWithdrawals flag or an error{
+func (s *balanceSvc) GetWithdrawals(ctx context.Context, payload *genBalance.GetWithdrawalsPayload) (res *genBalance.GetWithdrawalsResult, err error) {
+	loggingCtx := log.With(s.loggingCtx,
+		log.KV{K: "func", V: "GetWithdrawals"},
+	)
+
+	ctx, err = s.Auther.JWTAuth(ctx, payload.Authorization, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := s.Auther.UserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.Balance.RetrieveUserWithdrawals(ctx, userID)
+	if err != nil {
+		log.Error(loggingCtx, err)
+		if !errors.Is(err, storageErrors.ErrNotFound) {
+			return nil, err
+		}
+		noResult := "true"
+		return &genBalance.GetWithdrawalsResult{
+			NoResult: &noResult,
+			Withdrawals: nil,
+		}, nil
+	}
+
+	_ = userID
+
 	return nil, svcErrors.ErrNotImplemented
 }
 
 // ProcessAccruals retrieves accrual orders to process from the storage, fetches their accrual statuses from the accrual system, stores the results if any to the storage
 func (s *balanceSvc) ProcessAccruals(ctx context.Context) error {
-	log.Debugf(s.loggingCtx, "in ProcessAccruals")
+	log.Debugf(s.loggingCtx, "")
 	errCh := make(chan error, 1)
 	s.accrualOrdersToProcess = make(chan uuid.UUID)
 

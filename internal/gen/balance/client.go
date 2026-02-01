@@ -111,11 +111,11 @@ func (c *Client) WithdrawUserBalance(ctx context.Context, p *WithdrawUserBalance
 //   - "Not implemented" (type *service.GophermartError)
 //   - "missing_field" (type *goa.ServiceError)
 //   - error: internal error
-func (c *Client) GetWithdrawals(ctx context.Context, p *GetWithdrawalsPayload) (res []*Withdrawal, err error) {
+func (c *Client) GetWithdrawals(ctx context.Context, p *GetWithdrawalsPayload) (res *GetWithdrawalsResult, err error) {
 	var ires any
 	ires, err = c.GetWithdrawalsEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.([]*Withdrawal), nil
+	return ires.(*GetWithdrawalsResult), nil
 }
