@@ -243,7 +243,7 @@ func (s *balanceSvc) GetWithdrawals(ctx context.Context, payload *genBalance.Get
 	if err != nil {
 		return nil, err
 	}
-	_, err = s.Balance.RetrieveUserWithdrawals(ctx, userID)
+	withdrawals, err := s.Balance.RetrieveUserWithdrawals(ctx, userID)
 	if err != nil {
 		log.Error(loggingCtx, err)
 		if !errors.Is(err, storageErrors.ErrNotFound) {
@@ -251,14 +251,30 @@ func (s *balanceSvc) GetWithdrawals(ctx context.Context, payload *genBalance.Get
 		}
 		noResult := "true"
 		return &genBalance.GetWithdrawalsResult{
-			NoResult: &noResult,
+			NoResult:    &noResult,
 			Withdrawals: nil,
 		}, nil
 	}
 
-	_ = userID
+	res = &genBalance.GetWithdrawalsResult{
+		Withdrawals: make([]*genBalance.Withdrawal, len(withdrawals)),
+		NoResult:    nil,
+	}
 
-	return nil, svcErrors.ErrNotImplemented
+	for i, w := range withdrawals {
+		s := float64(w.Amount) / 100
+		t := w.CreatedAt.Format(time.RFC3339)
+
+		resW := genBalance.Withdrawal{
+			Order: (*genBalance.OrderNumber)(&w.Number),
+			Sum: &s,
+			ProcessedAt: &t,
+		}
+
+		res.Withdrawals[i] = &resW
+	}
+
+	return res, nil
 }
 
 // ProcessAccruals retrieves accrual orders to process from the storage, fetches their accrual statuses from the accrual system, stores the results if any to the storage
@@ -335,9 +351,6 @@ func (s *balanceSvc) processAccrual(ctx context.Context, orderID uuid.UUID) erro
 		log.KV{K: "orderID", V: orderID},
 	)
 
-	// ctx, cancel := context.WithTimeout(ctx, 100 * time.Millisecond)
-	// defer cancel()
-	// start storate transaction
 	storageTx, err := s.Balance.BeginTx(ctx)
 	if err != nil {
 		return err

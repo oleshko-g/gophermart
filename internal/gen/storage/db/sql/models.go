@@ -20,11 +20,12 @@ type Order struct {
 }
 
 type Transaction struct {
-	ID      uuid.UUID
-	UserID  uuid.UUID
-	OrderID uuid.UUID
-	Kind    string
-	Amount  int32
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	OrderID   uuid.UUID
+	Kind      string
+	Amount    int32
+	CreatedAt time.Time
 }
 
 type User struct {

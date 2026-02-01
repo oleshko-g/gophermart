@@ -233,6 +233,7 @@ func (s *Storage) StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderI
 		UserID:  userID,
 		OrderID: orderID,
 		Amount:  amount,
+		CreatedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return err
@@ -254,6 +255,7 @@ func (s *Storage) StoreUserWithdrawal(ctx context.Context, userID uuid.UUID, ord
 		UserID:  userID,
 		OrderID: orderID,
 		Amount:  amount,
+		CreatedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return uuid.UUID{}, err
@@ -262,14 +264,20 @@ func (s *Storage) StoreUserWithdrawal(ctx context.Context, userID uuid.UUID, ord
 	return newTransactionID, nil
 }
 
-func (s *Storage) RetrieveUserWithdrawals(ctx context.Context, userID uuid.UUID) (withdrawals []any, err error) {
-	err = sql.ErrNoRows
+func (s *Storage) RetrieveUserWithdrawals(ctx context.Context, userID uuid.UUID) (withdrawals []genDBSQL.SelectBalanceOrderTransactionAmountByUserIDAndKindRow, err error) {
+	withdrawals, err = s.queries.SelectBalanceOrderTransactionAmountByUserIDAndKind(ctx, genDBSQL.SelectBalanceOrderTransactionAmountByUserIDAndKindParams{
+		UserID: userID,
+		Kind:   schema.TransactionKindWithdrawal,
+	})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, storageErrors.ErrNotFound
-		}
+		return nil, err
 	}
-	return nil, nil
+
+	if withdrawals == nil {
+		return nil, storageErrors.ErrNotFound
+	}
+
+	return withdrawals, nil
 }
 
 type Tx struct {
