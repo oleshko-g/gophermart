@@ -345,3 +345,12 @@ func newPostgresConnector(ctx context.Context, cfg db.Config) (driver.Connector,
 
 	return connecter, nil
 }
+
+func NewPostgresConnector(ctx context.Context) (driver.Connector, error) {
+	connecter, err := pgDriver.NewConnector(db.PostgresDefaultDSN)
+	if err != nil {
+		return nil, err
+	}
+
+	return connecter, nil
+}

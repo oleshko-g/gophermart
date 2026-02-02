@@ -75,4 +75,5 @@ func (d DriverName) String() string {
 const (
 	DriverNamePostgres   DriverName = "postgres"
 	driverNamePostgreSQL DriverName = "postgresql"
+	PostgresDefaultDSN              = "postgres://localhost:5432/postgres?sslmode=disable"
 )
