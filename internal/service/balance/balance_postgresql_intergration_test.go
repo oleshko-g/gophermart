@@ -2,24 +2,29 @@ package balance
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
 	moqAccrual "github.com/oleshko-g/oggophermart/internal/gen/transport/moq/accrual"
 	"github.com/oleshko-g/oggophermart/internal/oglog"
-	"github.com/oleshko-g/oggophermart/internal/storage"
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
 	"github.com/oleshko-g/oggophermart/internal/storage/db/sql"
 	"github.com/oleshko-g/oggophermart/internal/transport"
+	_ "github.com/pressly/goose/v3"
 )
 
+func TestMain(t *testing.M) {
+	// TODO: sql.CreateDB
+	result := t.Run()
+	os.Exit(result)
+	// TODO: db.DropDB
+}
+
 func Test_processAccrual(t *testing.T) {
-	cfg := configueStorage()
-
-	var storageBalance storage.Balance
-
-	storageBalance, err := sql.New(cfg)
+	storageBalance, err := setUpSQLStorage(t.Name())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,12 +41,12 @@ func Test_processAccrual(t *testing.T) {
 			orderIDString:         "019bfe24-c85e-7c58-bca4-a9dfd7b95a5f",
 			fetchOrderAccrualFunc: processedFetchOrderAccrualFunc,
 		},
-		// {
-		// 	name:                  "empty order accrual",
-		// 	orderNumber:           "757483714",
-		// 	orderIDString:         "019be994-0e1f-7d0f-b288-67c60cc3218c",
-		// 	fetchOrderAccrualFunc: emptyFetchOrderAccrualFunc,
-		// },
+		{
+			name:                  "empty order accrual",
+			orderNumber:           "757483714",
+			orderIDString:         "019be994-0e1f-7d0f-b288-67c60cc3218c",
+			fetchOrderAccrualFunc: emptyFetchOrderAccrualFunc,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -60,12 +65,21 @@ func Test_processAccrual(t *testing.T) {
 
 }
 
-func configueStorage() *db.Config {
-	var cfg db.Config
+func setUpSQLStorage(testName string) (*sql.Storage, error) {
+	testDSN := fmt.Sprintf("postgres://gennadyoleshko:@localhost:5432/gophermart_%s?sslmode=disable", testName)
 
-	cfg.DSN().Set("postgres://gennadyoleshko:@localhost:5432/oggophermart?sslmode=disable")
+	var cfg *db.Config
+	err := cfg.DSN().Set(testDSN)
+	if err != nil {
+		return nil, err
+	}
 
-	return &cfg
+	storageBalance, err := sql.New(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return storageBalance, nil
 }
 
 type fetchOrderAccrualFunc func(context.Context, transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error)
@@ -82,5 +96,3 @@ func processedFetchOrderAccrualFunc(ctx context.Context, payload transport.Fetch
 		Accrual: &accrual,
 	}, nil
 }
-
-// result=&{Order:388772667448878 Status:PROCESSED Accrual:0x14000388480}
