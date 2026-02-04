@@ -4,7 +4,6 @@ package schema
 import (
 	"database/sql"
 	"embed"
-	"errors"
 
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
 	"github.com/pressly/goose/v3"
@@ -13,19 +12,15 @@ import (
 //go:embed psql/*.sql
 var psqlMigrations embed.FS
 
-// Up runs
-func Up(d db.DriverName, database *sql.DB) error {
-	if err := goose.SetDialect(d.String()); err != nil {
+// PostgresUp runs the schema/psql migration on the database
+func PostgresUp(database *sql.DB) error {
+	if err := goose.SetDialect(db.DriverNamePostgres.String()); err != nil {
 		return err
 	}
 
 	var dir string
-	if d == db.DriverNamePostgres {
-		goose.SetBaseFS(psqlMigrations)
-		dir = "psql"
-	} else {
-		return errors.New("driver is not supported")
-	}
+	goose.SetBaseFS(psqlMigrations)
+	dir = "psql"
 
 	if err := goose.Up(database, dir); err != nil {
 		return err

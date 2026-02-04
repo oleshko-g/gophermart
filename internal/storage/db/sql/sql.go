@@ -7,6 +7,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"io/fs"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,6 +17,7 @@ import (
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
 	"github.com/oleshko-g/oggophermart/internal/storage/db/sql/schema"
 	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
+	"github.com/pressly/goose/v3"
 )
 
 // New configures and open a new connection to the db and returns a [Storage] or an error
@@ -34,8 +36,8 @@ func New(cfg *db.Config) (s *Storage, err error) {
 		}
 	}
 
-	if err = schema.Up(cfg.DSN().DriverName, database); err != nil {
-		return
+	if err = schema.PostgresUp(database); err != nil {
+		return nil, err
 	}
 
 	queries := genDBSQL.New(database)
@@ -44,6 +46,16 @@ func New(cfg *db.Config) (s *Storage, err error) {
 		db:      database,
 		queries: queries,
 	}, nil
+}
+
+// Up runs sql migration prom the provided root and dirPath on the [sql.Storage] instance
+func (s *Storage) Up(root fs.FS, dirPath string) error {
+	return migrationsUp(s.db, root, dirPath)
+}
+
+func migrationsUp (db *sql.DB, root fs.FS, dirPath string) error {
+	goose.SetBaseFS(root)
+	return goose.Up(db, dirPath)
 }
 
 // Storage represents an internal implementation of [sql.DB]
@@ -228,11 +240,11 @@ func (s *Storage) StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderI
 	}
 
 	err = s.queries.InsertBalanceTransaction(ctx, genDBSQL.InsertBalanceTransactionParams{
-		ID:      newTransactionID,
-		Kind:    schema.TransactionKindAccrual,
-		UserID:  userID,
-		OrderID: orderID,
-		Amount:  amount,
+		ID:        newTransactionID,
+		Kind:      schema.TransactionKindAccrual,
+		UserID:    userID,
+		OrderID:   orderID,
+		Amount:    amount,
 		CreatedAt: time.Now().UTC(),
 	})
 	if err != nil {
@@ -250,11 +262,11 @@ func (s *Storage) StoreUserWithdrawal(ctx context.Context, userID uuid.UUID, ord
 	}
 
 	err = s.queries.InsertBalanceTransaction(ctx, genDBSQL.InsertBalanceTransactionParams{
-		ID:      newTransactionID,
-		Kind:    schema.TransactionKindWithdrawal,
-		UserID:  userID,
-		OrderID: orderID,
-		Amount:  amount,
+		ID:        newTransactionID,
+		Kind:      schema.TransactionKindWithdrawal,
+		UserID:    userID,
+		OrderID:   orderID,
+		Amount:    amount,
 		CreatedAt: time.Now().UTC(),
 	})
 	if err != nil {

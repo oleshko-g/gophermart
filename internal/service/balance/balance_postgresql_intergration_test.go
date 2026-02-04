@@ -2,9 +2,11 @@ package balance
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"log"
-	"os"
+	"strings"
+
 	"testing"
 
 	"github.com/google/uuid"
@@ -16,15 +18,11 @@ import (
 	_ "github.com/pressly/goose/v3"
 )
 
-func TestMain(t *testing.M) {
-	// TODO: sql.CreateDB
-	result := t.Run()
-	os.Exit(result)
-	// TODO: db.DropDB
-}
+//go:embed testdata
+var testDataFS embed.FS
 
 func Test_processAccrual(t *testing.T) {
-	storageBalance, err := setUpSQLStorage(t.Name())
+	storageBalance, err := newTestStorage(t.Name())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,16 +63,24 @@ func Test_processAccrual(t *testing.T) {
 
 }
 
-func setUpSQLStorage(testName string) (*sql.Storage, error) {
-	testDSN := fmt.Sprintf("postgres://gennadyoleshko:@localhost:5432/gophermart_%s?sslmode=disable", testName)
+// newTestStorage creates a new [sql.Storage] and runs the ./testdata/{testName} migrations on it
+func newTestStorage(testName string) (*sql.Storage, error) {
+	testName = strings.ToLower(testName)
+	testDSN := fmt.Sprintf(
+		"postgres://gennadyoleshko:@localhost:5432/gophermart_%s?sslmode=disable", testName)
 
-	var cfg *db.Config
+	cfg := &db.Config{}
 	err := cfg.DSN().Set(testDSN)
 	if err != nil {
 		return nil, err
 	}
 
 	storageBalance, err := sql.New(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	err = storageBalance.Up(testDataFS, testName)
 	if err != nil {
 		return nil, err
 	}
