@@ -18,7 +18,7 @@ import (
 	_ "github.com/pressly/goose/v3"
 )
 
-//go:embed testdata
+//go:embed testdata/*.sql
 var testDataFS embed.FS
 
 func Test_processAccrual(t *testing.T) {
@@ -79,8 +79,10 @@ func newTestStorage(testName string) (*sql.Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	err = storageBalance.Up(testDataFS, testName)
+	sql, err := testDataFS.ReadFile(testName + ".sql")
+	_ = err
+	ctx := context.Background()
+	err = storageBalance.Exec(ctx, string(sql))
 	if err != nil {
 		return nil, err
 	}

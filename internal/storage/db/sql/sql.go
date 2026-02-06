@@ -7,7 +7,6 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
-	"io/fs"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,7 +16,6 @@ import (
 	"github.com/oleshko-g/oggophermart/internal/storage/db"
 	"github.com/oleshko-g/oggophermart/internal/storage/db/sql/schema"
 	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
-	"github.com/pressly/goose/v3"
 )
 
 // New configures and open a new connection to the db and returns a [Storage] or an error
@@ -48,14 +46,10 @@ func New(cfg *db.Config) (s *Storage, err error) {
 	}, nil
 }
 
-// Up runs sql migration prom the provided root and dirPath on the [sql.Storage] instance
-func (s *Storage) Up(root fs.FS, dirPath string) error {
-	return migrationsUp(s.db, root, dirPath)
-}
-
-func migrationsUp (db *sql.DB, root fs.FS, dirPath string) error {
-	goose.SetBaseFS(root)
-	return goose.Up(db, dirPath)
+// Exec runs sql migration prom the provided root and dirPath on the [sql.Storage] instance
+func (s *Storage) Exec(ctx context.Context, sqlStatement string) error {
+	_, err := s.db.ExecContext(ctx, sqlStatement)
+	return err
 }
 
 // Storage represents an internal implementation of [sql.DB]
