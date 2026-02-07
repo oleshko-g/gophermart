@@ -26,6 +26,13 @@ func Test_processAccrual(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	t.Cleanup(func() {
+		ctx := context.Background()
+		storageBalance.TearDown(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
 
 	tests := []struct {
 		name                  string

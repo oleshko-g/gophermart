@@ -41,14 +41,15 @@ func New(cfg *db.Config) (s *Storage, err error) {
 	queries := genDBSQL.New(database)
 
 	return &Storage{
+		dbName:  cfg.DabaseName,
 		db:      database,
 		queries: queries,
 	}, nil
 }
 
-
 // Storage represents an internal implementation of [sql.DB]
 type Storage struct {
+	dbName  string
 	db      *sql.DB
 	queries *genDBSQL.Queries
 }
@@ -56,7 +57,6 @@ type Storage struct {
 var _ storage.User = (*Storage)(nil)
 var _ storage.Balance = (*Storage)(nil)
 var _ statementExecer = (*Storage)(nil)
-
 
 type statementExecer interface {
 	Exec(ctx context.Context, stmt string) error
@@ -67,7 +67,6 @@ func (s *Storage) Exec(ctx context.Context, stmt string) error {
 	_, err := s.db.ExecContext(ctx, stmt)
 	return err
 }
-
 
 // RetrieveUserBalance retrieves current user's balance and the amount withdrawn by their userID or an error
 func (s *Storage) RetrieveUserBalance(ctx context.Context, userID uuid.UUID) (currentBalance, withdrawn int, err error) {
@@ -319,7 +318,7 @@ func (s *Storage) BeginTx(ctx context.Context) (*storage.Tx, error) {
 
 func newDB(cfg db.Config) (*sql.DB, error) {
 	ctx := context.Background()
-	connector, err := newPostgresConnector(ctx, cfg)
+	connector, err := newPostgresConnector(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -327,8 +326,40 @@ func newDB(cfg db.Config) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return sql.Open(string(cfg.DriverName), cfg.DSN().String())
+}
+
+func (s *Storage) TearDown(ctx context.Context) error {
+	err := s.db.Close()
+	if err != nil {
+		return err
+	}
+
+	err = dropDB(ctx, s.dbName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func dropDB(ctx context.Context, dbName string) error {
+
+	connector, err := newPostgresConnector(ctx)
+	if err != nil {
+		return err
+	}
+
+	db := sql.OpenDB(connector)
+	defer db.Close()
+
+	q := fmt.Sprintf("DROP DATABASE %s;", dbName)
+	_, err = db.ExecContext(ctx, q)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // createDB executes CREATE DATABASE with the dbName parameter using the provided [driver.Connetor]
@@ -346,21 +377,7 @@ func createDB(ctx context.Context, conn driver.Connector, dbName string) error {
 	return nil
 }
 
-func newPostgresConnector(ctx context.Context, cfg db.Config) (driver.Connector, error) {
-	if cfg.DriverName.String() != string(db.DriverNamePostgres) &&
-		cfg.DabaseName != string(db.DriverNamePostgres) {
-		return nil, storageErrors.ErrUnsupportedDataSource
-	}
-
-	connecter, err := pgDriver.NewConnector(cfg.DSN().Default)
-	if err != nil {
-		return nil, err
-	}
-
-	return connecter, nil
-}
-
-func NewPostgresConnector(ctx context.Context) (driver.Connector, error) {
+func newPostgresConnector(ctx context.Context) (driver.Connector, error) {
 	connecter, err := pgDriver.NewConnector(db.PostgresDefaultDSN)
 	if err != nil {
 		return nil, err
