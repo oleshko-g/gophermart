@@ -46,11 +46,6 @@ func New(cfg *db.Config) (s *Storage, err error) {
 	}, nil
 }
 
-// Exec runs sql migration prom the provided root and dirPath on the [sql.Storage] instance
-func (s *Storage) Exec(ctx context.Context, sqlStatement string) error {
-	_, err := s.db.ExecContext(ctx, sqlStatement)
-	return err
-}
 
 // Storage represents an internal implementation of [sql.DB]
 type Storage struct {
@@ -60,6 +55,19 @@ type Storage struct {
 
 var _ storage.User = (*Storage)(nil)
 var _ storage.Balance = (*Storage)(nil)
+var _ statementExecer = (*Storage)(nil)
+
+
+type statementExecer interface {
+	Exec(ctx context.Context, stmt string) error
+}
+
+// Exec executes the sql statement on the underlying [sql.DB] or returns an error
+func (s *Storage) Exec(ctx context.Context, stmt string) error {
+	_, err := s.db.ExecContext(ctx, stmt)
+	return err
+}
+
 
 // RetrieveUserBalance retrieves current user's balance and the amount withdrawn by their userID or an error
 func (s *Storage) RetrieveUserBalance(ctx context.Context, userID uuid.UUID) (currentBalance, withdrawn int, err error) {

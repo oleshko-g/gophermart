@@ -1,5 +1,3 @@
--- +goose Up
-
 --
 -- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: gennadyoleshko
 --

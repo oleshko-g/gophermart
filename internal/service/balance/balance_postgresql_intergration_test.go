@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"log"
+	"path"
 	"strings"
 
 	"testing"
@@ -63,11 +64,11 @@ func Test_processAccrual(t *testing.T) {
 
 }
 
-// newTestStorage creates a new [sql.Storage] and runs the ./testdata/{testName} migrations on it
+// newTestStorage creates a new [sql.Storage] and runs sql statements from ./testdata/{testName} or returns an error
 func newTestStorage(testName string) (*sql.Storage, error) {
-	testName = strings.ToLower(testName)
+	tn := strings.ToLower(testName)
 	testDSN := fmt.Sprintf(
-		"postgres://gennadyoleshko:@localhost:5432/gophermart_%s?sslmode=disable", testName)
+		"postgres://gennadyoleshko:@localhost:5432/gophermart_%s?sslmode=disable", tn)
 
 	cfg := &db.Config{}
 	err := cfg.DSN().Set(testDSN)
@@ -79,10 +80,14 @@ func newTestStorage(testName string) (*sql.Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	sql, err := testDataFS.ReadFile(testName + ".sql")
-	_ = err
+
+	sqlStmt, err := testDataFS.ReadFile(path.Join("testdata", testName + ".sql"))
+	if err != nil {
+		return nil, err
+	}
+
 	ctx := context.Background()
-	err = storageBalance.Exec(ctx, string(sql))
+	err = storageBalance.Exec(ctx, string(sqlStmt))
 	if err != nil {
 		return nil, err
 	}
