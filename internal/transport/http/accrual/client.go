@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/oleshko-g/oggophermart/internal/transport"
+	"github.com/oleshko-g/gophermart/internal/transport"
 	_ "goa.design/clue/log"
 
 	goahttp "goa.design/goa/v3/http"

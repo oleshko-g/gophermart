@@ -1,8 +1,8 @@
-// Package service is the package shared by all oggophermart services
+// Package service is the package shared by all gophermart services
 package errors
 
 import (
-	genSvc "github.com/oleshko-g/oggophermart/internal/gen/service"
+	genSvc "github.com/oleshko-g/gophermart/internal/gen/service"
 )
 
 type svcError = genSvc.GophermartError

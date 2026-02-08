@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	genDBSQL "github.com/oleshko-g/oggophermart/internal/gen/storage/db/sql"
+	genDBSQL "github.com/oleshko-g/gophermart/internal/gen/storage/db/sql"
 )
 
 type Storager interface {

@@ -3,7 +3,7 @@
 // User types
 //
 // Command:
-// $ goa gen github.com/oleshko-g/oggophermart/api/design -o internal/
+// $ goa gen github.com/oleshko-g/gophermart/api/design -o internal/
 
 package service
 

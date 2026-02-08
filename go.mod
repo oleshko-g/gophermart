@@ -1,4 +1,4 @@
-module github.com/oleshko-g/oggophermart
+module github.com/oleshko-g/gophermart
 
 go 1.25.5
 

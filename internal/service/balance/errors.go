@@ -1,7 +1,7 @@
 package balance
 
 import (
-	"github.com/oleshko-g/oggophermart/internal/service/errors"
+	"github.com/oleshko-g/gophermart/internal/service/errors"
 )
 
 var (

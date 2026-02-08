@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"time"
 
-	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
-	genBalanceHTTPSrv "github.com/oleshko-g/oggophermart/internal/gen/http/balance/server"
-	genUserHTTPSvr "github.com/oleshko-g/oggophermart/internal/gen/http/user/server"
-	user "github.com/oleshko-g/oggophermart/internal/gen/user"
-	"github.com/oleshko-g/oggophermart/internal/service"
+	genBalance "github.com/oleshko-g/gophermart/internal/gen/balance"
+	genBalanceHTTPSrv "github.com/oleshko-g/gophermart/internal/gen/http/balance/server"
+	genUserHTTPSvr "github.com/oleshko-g/gophermart/internal/gen/http/user/server"
+	user "github.com/oleshko-g/gophermart/internal/gen/user"
+	"github.com/oleshko-g/gophermart/internal/service"
 	"goa.design/clue/log"
 	goahttp "goa.design/goa/v3/http"
 )

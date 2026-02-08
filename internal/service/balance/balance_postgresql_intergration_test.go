@@ -10,11 +10,11 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	moqAccrual "github.com/oleshko-g/oggophermart/internal/gen/transport/moq/accrual"
-	"github.com/oleshko-g/oggophermart/internal/oglog"
-	"github.com/oleshko-g/oggophermart/internal/storage/db"
-	"github.com/oleshko-g/oggophermart/internal/storage/db/sql"
-	"github.com/oleshko-g/oggophermart/internal/transport"
+	moqAccrual "github.com/oleshko-g/gophermart/internal/gen/transport/moq/accrual"
+	"github.com/oleshko-g/gophermart/internal/oglog"
+	"github.com/oleshko-g/gophermart/internal/storage/db"
+	"github.com/oleshko-g/gophermart/internal/storage/db/sql"
+	"github.com/oleshko-g/gophermart/internal/transport"
 	_ "github.com/pressly/goose/v3"
 )
 
@@ -28,8 +28,9 @@ func Test_processAccrual(t *testing.T) {
 	}
 	t.Cleanup(func() {
 		ctx := context.Background()
-		storageBalance.TearDown(ctx)
+		err = storageBalance.TearDown(ctx)
 		if err != nil {
+			log.Fatal(err)
 			t.Fatal(err)
 		}
 	})

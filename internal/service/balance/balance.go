@@ -9,12 +9,12 @@ import (
 
 	"github.com/EClaesson/go-luhn"
 	"github.com/google/uuid"
-	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
-	"github.com/oleshko-g/oggophermart/internal/service"
-	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
-	"github.com/oleshko-g/oggophermart/internal/storage"
-	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
-	"github.com/oleshko-g/oggophermart/internal/transport"
+	genBalance "github.com/oleshko-g/gophermart/internal/gen/balance"
+	"github.com/oleshko-g/gophermart/internal/service"
+	svcErrors "github.com/oleshko-g/gophermart/internal/service/errors"
+	"github.com/oleshko-g/gophermart/internal/storage"
+	storageErrors "github.com/oleshko-g/gophermart/internal/storage/errors"
+	"github.com/oleshko-g/gophermart/internal/transport"
 	"goa.design/clue/log"
 	"golang.org/x/sync/errgroup"
 )

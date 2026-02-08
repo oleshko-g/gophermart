@@ -11,11 +11,11 @@ import (
 
 	"github.com/google/uuid"
 	pgDriver "github.com/lib/pq" // revive:disable-line:blank-imports registers the postgres driver
-	genDBSQL "github.com/oleshko-g/oggophermart/internal/gen/storage/db/sql"
-	"github.com/oleshko-g/oggophermart/internal/storage"
-	"github.com/oleshko-g/oggophermart/internal/storage/db"
-	"github.com/oleshko-g/oggophermart/internal/storage/db/sql/schema"
-	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
+	genDBSQL "github.com/oleshko-g/gophermart/internal/gen/storage/db/sql"
+	"github.com/oleshko-g/gophermart/internal/storage"
+	"github.com/oleshko-g/gophermart/internal/storage/db"
+	"github.com/oleshko-g/gophermart/internal/storage/db/sql/schema"
+	storageErrors "github.com/oleshko-g/gophermart/internal/storage/errors"
 )
 
 // New configures and open a new connection to the db and returns a [Storage] or an error

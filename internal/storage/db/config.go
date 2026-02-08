@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
+	storageErrors "github.com/oleshko-g/gophermart/internal/storage/errors"
 )
 
 // Config represents a config of an SQL database

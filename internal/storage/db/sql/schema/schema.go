@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"embed"
 
-	"github.com/oleshko-g/oggophermart/internal/storage/db"
+	"github.com/oleshko-g/gophermart/internal/storage/db"
 	"github.com/pressly/goose/v3"
 )
 

@@ -5,8 +5,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
-	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
+	genBalance "github.com/oleshko-g/gophermart/internal/gen/balance"
+	genUser "github.com/oleshko-g/gophermart/internal/gen/user"
 )
 
 type Service struct {
