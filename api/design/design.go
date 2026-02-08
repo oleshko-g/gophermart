@@ -3,19 +3,25 @@ package design
 import . "goa.design/goa/v3/dsl"
 
 var _ = API("gophermart", func() {
-	Version("0.2")
+	// INFO: Gophermart
+	Version("1.0")
+	License(func() {
+		Name("Apache 2.0")
+		URL("https://github.com/oleshko-g/gophermart/blob/dev/LICENSE")
+	})
 	HTTP(func() {
 		Path("/api")
 		Consumes("text/plain", "application/json")
 	})
 })
 
-// INFO: User
 var _ = Service("user", func() {
+	// INFO:  User service
 	Error("Invalid input parameter", ErrorType)
 	Error("User is not authenticated", ErrorType)
 	Error("Internal service error", ErrorType)
 
+	// INFO:    Register
 	Method("register", func() {
 		Payload(LoginPassword)
 		Result(JWTToken)
@@ -39,6 +45,7 @@ var _ = Service("user", func() {
 		})
 
 	})
+	// INFO:    Login
 	Method("login", func() {
 		Payload(LoginPassword)
 		Result(JWTToken)
@@ -61,9 +68,8 @@ var _ = Service("user", func() {
 		})
 	})
 })
-
-// INFO: Balance
 var _ = Service("balance", func() {
+	// INFO:  Balance Service
 	Security(JWTAuth)
 	Error("Invalid input parameter", ErrorType)
 	Error("User is not authenticated", ErrorType)
@@ -79,6 +85,7 @@ var _ = Service("balance", func() {
 
 	})
 
+	// INFO:    UploadUserOrder
 	Method("UploadUserOrder", func() {
 		Description("Upload user order")
 		Result(func() {
@@ -143,7 +150,7 @@ var _ = Service("balance", func() {
 			})
 		})
 	})
-	// TODO:  ListUserOrders
+	// INFO:    ListUserOrders
 	Method("ListUserOrders", func() {
 		Description("List user orders")
 		Payload(func() {
@@ -205,7 +212,7 @@ var _ = Service("balance", func() {
 			})
 		})
 	})
-	// INFO:  GetUserBalance
+	// INFO:    GetUserBalance
 	Method("GetUserBalance", func() {
 		Description("Get user balance")
 		Payload(func() {
@@ -247,7 +254,7 @@ var _ = Service("balance", func() {
 			})
 		})
 	})
-	// INFO:  WithdrawUserBalance
+	// INFO:    WithdrawUserBalance
 	Method("WithdrawUserBalance", func() {
 		Payload(func() {
 			Token("Authorization", String, "A JWT token used to authenticate a request", func() {
@@ -297,7 +304,7 @@ var _ = Service("balance", func() {
 			})
 		})
 	})
-	// TODO:  GetWithdrawals
+	// INFO:    GetWithdrawals
 	Method("GetWithdrawals", func() {
 		Payload(func() {
 			Token("Authorization", String, "A JWT token used to authenticate a request", func() {
