@@ -10,6 +10,7 @@ import (
 
 	genBalance "github.com/oleshko-g/gophermart/internal/gen/balance"
 	genBalanceHTTPSrv "github.com/oleshko-g/gophermart/internal/gen/http/balance/server"
+	genDocsHTTPSvr "github.com/oleshko-g/gophermart/internal/gen/http/docs/server"
 	genUserHTTPSvr "github.com/oleshko-g/gophermart/internal/gen/http/user/server"
 	user "github.com/oleshko-g/gophermart/internal/gen/user"
 	"github.com/oleshko-g/gophermart/internal/service"
@@ -46,10 +47,12 @@ func newHandlers(loggingCtx context.Context, balanceEndpoints *genBalance.Endpoi
 	// create HTTP servers
 	balanceServer := genBalanceHTTPSrv.New(balanceEndpoints, mux, reqDecoder, resEncoder, errHandler, nil)
 	userServer := genUserHTTPSvr.New(userEndpoints, mux, reqDecoder, resEncoder, errHandler, nil)
+	docsServer := genDocsHTTPSvr.New(nil, mux, reqDecoder, resEncoder, errHandler, nil, nil, nil)
 
 	// mount HTTP endpoint onto mux
 	balanceServer.Mount(mux)
 	userServer.Mount(mux)
+	genDocsHTTPSvr.Mount(mux, docsServer)
 
 	loggingMiddleware := log.HTTP(loggingCtx)
 	var handlers = loggingMiddleware(mux)

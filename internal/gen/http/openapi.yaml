@@ -1,9 +1,11 @@
 swagger: "2.0"
 info:
     title: ""
-    version: "0.2"
+    license:
+        name: Apache 2.0
+        url: https://github.com/oleshko-g/gophermart/blob/dev/LICENSE
+    version: "1.0"
 host: localhost:80
-basePath: /api
 consumes:
     - text/plain
     - application/json
@@ -12,7 +14,35 @@ produces:
     - application/xml
     - application/gob
 paths:
-    /user/balance:
+    /api/openapi.yaml:
+        get:
+            tags:
+                - docs
+            summary: Download ./internal/gen/http/openapi.yaml
+            description: OpenAPI 2.0
+            operationId: docs#/api/openapi.yaml
+            responses:
+                "200":
+                    description: File downloaded
+                    schema:
+                        type: file
+            schemes:
+                - http
+    /api/openapi3.yaml:
+        get:
+            tags:
+                - docs
+            summary: Download ./internal/gen/http/openapi3.yaml
+            description: OpenAPI 3.0
+            operationId: docs#/api/openapi3.yaml
+            responses:
+                "200":
+                    description: File downloaded
+                    schema:
+                        type: file
+            schemes:
+                - http
+    /api/user/balance:
         get:
             tags:
                 - balance
@@ -60,7 +90,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /user/balance/withdraw:
+    /api/user/balance/withdraw:
         post:
             tags:
                 - balance
@@ -114,7 +144,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /user/login:
+    /api/user/login:
         post:
             tags:
                 - user
@@ -144,7 +174,7 @@ paths:
                     description: Internal Server Error response.
             schemes:
                 - http
-    /user/orders:
+    /api/user/orders:
         get:
             tags:
                 - balance
@@ -250,7 +280,7 @@ paths:
                 - http
             security:
                 - jwt_header_Authorization: []
-    /user/register:
+    /api/user/register:
         post:
             tags:
                 - user
@@ -280,7 +310,7 @@ paths:
                     description: Internal Server Error response.
             schemes:
                 - http
-    /user/withdrawals:
+    /api/user/withdrawals:
         get:
             tags:
                 - balance

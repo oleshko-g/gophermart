@@ -15,6 +15,16 @@ var _ = API("gophermart", func() {
 	})
 })
 
+var _ = Service("docs", func() {
+	// INFO:  Docs
+	Files("/openapi.yaml", "./internal/gen/http/openapi.yaml", func() {
+		Description("OpenAPI 2.0")
+	})
+	Files("/openapi3.yaml", "./internal/gen/http/openapi3.yaml", func() {
+		Description("OpenAPI 3.0")
+	})
+})
+
 var _ = Service("user", func() {
 	// INFO:  User service
 	Error("Invalid input parameter", ErrorType)
