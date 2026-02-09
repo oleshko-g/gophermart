@@ -1,4 +1,4 @@
-package main
+package main //revive:disable-line:package-comments The main package
 
 import (
 	"context"
@@ -9,14 +9,14 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/oleshko-g/oggophermart/internal/service"
-	balance "github.com/oleshko-g/oggophermart/internal/service/balance"
-	user "github.com/oleshko-g/oggophermart/internal/service/user"
-	"github.com/oleshko-g/oggophermart/internal/storage"
-	"github.com/oleshko-g/oggophermart/internal/storage/db"
-	"github.com/oleshko-g/oggophermart/internal/storage/db/sql"
-	"github.com/oleshko-g/oggophermart/internal/transport/http"
-	accrualHTTP "github.com/oleshko-g/oggophermart/internal/transport/http/accrual"
+	"github.com/oleshko-g/gophermart/internal/service"
+	balance "github.com/oleshko-g/gophermart/internal/service/balance"
+	user "github.com/oleshko-g/gophermart/internal/service/user"
+	"github.com/oleshko-g/gophermart/internal/storage"
+	"github.com/oleshko-g/gophermart/internal/storage/db"
+	"github.com/oleshko-g/gophermart/internal/storage/db/sql"
+	"github.com/oleshko-g/gophermart/internal/transport/http"
+	accrualHTTP "github.com/oleshko-g/gophermart/internal/transport/http/accrual"
 	"goa.design/clue/log"
 )
 

@@ -3,7 +3,7 @@
 // balance HTTP server
 //
 // Command:
-// $ goa gen github.com/oleshko-g/oggophermart/api/design -o internal/
+// $ goa gen github.com/oleshko-g/gophermart/api/design -o internal/
 
 package server
 
@@ -11,7 +11,7 @@ import (
 	"context"
 	"net/http"
 
-	balance "github.com/oleshko-g/oggophermart/internal/gen/balance"
+	balance "github.com/oleshko-g/gophermart/internal/gen/balance"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 )

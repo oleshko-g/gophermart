@@ -8,6 +8,7 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
+// WithLogEndpoint implements a logging middleware
 func WithLogEndpoint(endpoint goa.Endpoint) goa.Endpoint {
 	return func(ctx context.Context, payload any) (result any, err error) {
 		log.MustContainLogger(ctx)

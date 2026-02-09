@@ -11,11 +11,11 @@ import (
 
 	"github.com/google/uuid"
 	pgDriver "github.com/lib/pq" // revive:disable-line:blank-imports registers the postgres driver
-	genDBSQL "github.com/oleshko-g/oggophermart/internal/gen/storage/db/sql"
-	"github.com/oleshko-g/oggophermart/internal/storage"
-	"github.com/oleshko-g/oggophermart/internal/storage/db"
-	"github.com/oleshko-g/oggophermart/internal/storage/db/sql/schema"
-	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
+	genDBSQL "github.com/oleshko-g/gophermart/internal/gen/storage/db/sql"
+	"github.com/oleshko-g/gophermart/internal/storage"
+	"github.com/oleshko-g/gophermart/internal/storage/db"
+	"github.com/oleshko-g/gophermart/internal/storage/db/sql/schema"
+	storageErrors "github.com/oleshko-g/gophermart/internal/storage/errors"
 )
 
 // New configures and open a new connection to the db and returns a [Storage] or an error
@@ -34,13 +34,14 @@ func New(cfg *db.Config) (s *Storage, err error) {
 		}
 	}
 
-	if err = schema.Up(cfg.DSN().DriverName, database); err != nil {
-		return
+	if err = schema.PostgresUp(database); err != nil {
+		return nil, err
 	}
 
 	queries := genDBSQL.New(database)
 
 	return &Storage{
+		dbName:  cfg.DabaseName,
 		db:      database,
 		queries: queries,
 	}, nil
@@ -48,16 +49,23 @@ func New(cfg *db.Config) (s *Storage, err error) {
 
 // Storage represents an internal implementation of [sql.DB]
 type Storage struct {
+	dbName  string
 	db      *sql.DB
 	queries *genDBSQL.Queries
 }
 
 var _ storage.User = (*Storage)(nil)
 var _ storage.Balance = (*Storage)(nil)
+var _ statementExecer = (*Storage)(nil)
 
-// RetrieveUserBalance retrieves current user's balance and the amount withdrawn by their userID or an error
-func (s *Storage) RetrieveUserBalance(ctx context.Context, userID uuid.UUID) (currentBalance, withdrawn int, err error) {
-	return 0, 0, nil
+type statementExecer interface {
+	Exec(ctx context.Context, stmt string) error
+}
+
+// Exec executes the sql statement on the underlying [sql.DB] or returns an error
+func (s *Storage) Exec(ctx context.Context, stmt string) error {
+	_, err := s.db.ExecContext(ctx, stmt)
+	return err
 }
 
 // RetrieveUser retrieves a user id by their login
@@ -81,7 +89,7 @@ func (s *Storage) StoreUser(ctx context.Context, login, hashedPassword string) (
 			goto newUser
 		}
 		return err
-	} else {
+	} else { // revive:disable-line:indent-error-flow may be refactored
 		return storageErrors.ErrAlreadyExists
 	}
 
@@ -112,6 +120,7 @@ newUser:
 	return nil
 }
 
+// StoreOrder stores the user's order or returns an error
 func (s *Storage) StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber, orderStatus string, createdAt time.Time) (orderID uuid.UUID, err error) {
 
 	newOrderID, err := uuid.NewV7()
@@ -141,11 +150,8 @@ func (s *Storage) StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber,
 
 	return newOrderID, nil
 }
-func (s *Storage) RetreiveOrder(ctx context.Context, userID uuid.UUID, orderNumber string) error {
-	// s.queries.Se
-	return nil
-}
 
+// RetreiveUserPassword retrieves the user's hashed password or returns an error
 func (s *Storage) RetreiveUserPassword(ctx context.Context, login string) (hashedPassword string, err error) {
 	hashedPassword, err = s.queries.SelectUserHashedPasswordByLogin(ctx, login)
 	if err != nil {
@@ -157,6 +163,7 @@ func (s *Storage) RetreiveUserPassword(ctx context.Context, login string) (hashe
 	return hashedPassword, nil
 }
 
+// RetreiveOrderUser retrieves the user ID of the order or returns an error
 func (s *Storage) RetreiveOrderUser(ctx context.Context, orderNumber string) (userID uuid.UUID, err error) {
 	userID, err = s.queries.SelectUserIDByOrderNumber(ctx, orderNumber)
 	if err != nil {
@@ -169,6 +176,7 @@ func (s *Storage) RetreiveOrderUser(ctx context.Context, orderNumber string) (us
 	return userID, nil
 }
 
+// RetrieaveUserOrders user's orders or returns an error
 func (s *Storage) RetrieaveUserOrders(ctx context.Context, userID uuid.UUID) (userOrders []genDBSQL.SelectOrdersByUserIDRow, err error) {
 	rows, err := s.queries.SelectOrdersByUserID(ctx, userID)
 	if err != nil {
@@ -191,6 +199,7 @@ func (s *Storage) Retrieve(ctx context.Context, userID uuid.UUID) (genDBSQL.Sele
 	return userBalance, nil
 }
 
+// RetrieveOrderIDsForAccrual retrieves unprocessed orders IDs for checking their accrual status or returns an error
 func (s *Storage) RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, error) {
 	statuses := []string{schema.OrderStatusNew, schema.OrderStatusProcessing}
 
@@ -202,7 +211,7 @@ func (s *Storage) RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, 
 	return orderIDs, nil
 }
 
-// StoreUserWithdrawal stores an accrual user transaction
+// RetrieveOrderForAccrual retrieves the order data by its id or returns
 func (s *Storage) RetrieveOrderForAccrual(ctx context.Context, orderID uuid.UUID) (storage.Order, error) {
 
 	order, err := s.queries.SelectOrder(ctx, orderID)
@@ -213,6 +222,7 @@ func (s *Storage) RetrieveOrderForAccrual(ctx context.Context, orderID uuid.UUID
 	return order, nil
 }
 
+// UpdateOrderStatus updates user's order status or returns an error
 func (s *Storage) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error {
 	err := s.queries.UpdateOrderStatus(ctx, genDBSQL.UpdateOrderStatusParams{ID: orderID, Status: status})
 	if err != nil {
@@ -221,6 +231,7 @@ func (s *Storage) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, stat
 	return nil
 }
 
+// StoreUserAccrual stores an accrual balance transaction or returns an error
 func (s *Storage) StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, amount int32) error {
 	newTransactionID, err := uuid.NewV7()
 	if err != nil {
@@ -228,11 +239,11 @@ func (s *Storage) StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderI
 	}
 
 	err = s.queries.InsertBalanceTransaction(ctx, genDBSQL.InsertBalanceTransactionParams{
-		ID:      newTransactionID,
-		Kind:    schema.TransactionKindAccrual,
-		UserID:  userID,
-		OrderID: orderID,
-		Amount:  amount,
+		ID:        newTransactionID,
+		Kind:      schema.TransactionKindAccrual,
+		UserID:    userID,
+		OrderID:   orderID,
+		Amount:    amount,
 		CreatedAt: time.Now().UTC(),
 	})
 	if err != nil {
@@ -250,11 +261,11 @@ func (s *Storage) StoreUserWithdrawal(ctx context.Context, userID uuid.UUID, ord
 	}
 
 	err = s.queries.InsertBalanceTransaction(ctx, genDBSQL.InsertBalanceTransactionParams{
-		ID:      newTransactionID,
-		Kind:    schema.TransactionKindWithdrawal,
-		UserID:  userID,
-		OrderID: orderID,
-		Amount:  amount,
+		ID:        newTransactionID,
+		Kind:      schema.TransactionKindWithdrawal,
+		UserID:    userID,
+		OrderID:   orderID,
+		Amount:    amount,
 		CreatedAt: time.Now().UTC(),
 	})
 	if err != nil {
@@ -264,6 +275,7 @@ func (s *Storage) StoreUserWithdrawal(ctx context.Context, userID uuid.UUID, ord
 	return newTransactionID, nil
 }
 
+// RetrieveUserWithdrawals retrieves user's withdrawals or returns an error
 func (s *Storage) RetrieveUserWithdrawals(ctx context.Context, userID uuid.UUID) (withdrawals []genDBSQL.SelectBalanceOrderTransactionAmountByUserIDAndKindRow, err error) {
 	withdrawals, err = s.queries.SelectBalanceOrderTransactionAmountByUserIDAndKind(ctx, genDBSQL.SelectBalanceOrderTransactionAmountByUserIDAndKindParams{
 		UserID: userID,
@@ -278,11 +290,6 @@ func (s *Storage) RetrieveUserWithdrawals(ctx context.Context, userID uuid.UUID)
 	}
 
 	return withdrawals, nil
-}
-
-type Tx struct {
-	*storage.Tx
-	*storage.Storage
 }
 
 // BeginTx is the implementation of [storage.Transacter]. It wraps [database/sql.BeginTx]
@@ -305,7 +312,7 @@ func (s *Storage) BeginTx(ctx context.Context) (*storage.Tx, error) {
 
 func newDB(cfg db.Config) (*sql.DB, error) {
 	ctx := context.Background()
-	connector, err := newPostgresConnector(ctx, cfg)
+	connector, err := newPostgresConnector()
 	if err != nil {
 		return nil, err
 	}
@@ -313,8 +320,41 @@ func newDB(cfg db.Config) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return sql.Open(string(cfg.DriverName), cfg.DSN().String())
+}
+
+// TearDown closes the underlying [*sql.DB] and drops it or returns an error
+func (s *Storage) TearDown(ctx context.Context) error {
+	err := s.db.Close()
+	if err != nil {
+		return err
+	}
+
+	err = dropDB(ctx, s.dbName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func dropDB(ctx context.Context, dbName string) error {
+
+	connector, err := newPostgresConnector()
+	if err != nil {
+		return err
+	}
+
+	db := sql.OpenDB(connector)
+	defer db.Close()
+
+	q := fmt.Sprintf("DROP DATABASE %s;", dbName)
+	_, err = db.ExecContext(ctx, q)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // createDB executes CREATE DATABASE with the dbName parameter using the provided [driver.Connetor]
@@ -332,13 +372,8 @@ func createDB(ctx context.Context, conn driver.Connector, dbName string) error {
 	return nil
 }
 
-func newPostgresConnector(ctx context.Context, cfg db.Config) (driver.Connector, error) {
-	if cfg.DriverName.String() != string(db.DriverNamePostgres) &&
-		cfg.DabaseName != string(db.DriverNamePostgres) {
-		return nil, storageErrors.ErrUnsupportedDataSource
-	}
-
-	connecter, err := pgDriver.NewConnector(cfg.DSN().Default)
+func newPostgresConnector() (driver.Connector, error) {
+	connecter, err := pgDriver.NewConnector(db.PostgresDefaultDSN)
 	if err != nil {
 		return nil, err
 	}

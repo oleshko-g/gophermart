@@ -9,12 +9,12 @@ import (
 
 	"github.com/EClaesson/go-luhn"
 	"github.com/google/uuid"
-	genBalance "github.com/oleshko-g/oggophermart/internal/gen/balance"
-	"github.com/oleshko-g/oggophermart/internal/service"
-	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
-	"github.com/oleshko-g/oggophermart/internal/storage"
-	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
-	"github.com/oleshko-g/oggophermart/internal/transport"
+	genBalance "github.com/oleshko-g/gophermart/internal/gen/balance"
+	"github.com/oleshko-g/gophermart/internal/service"
+	svcErrors "github.com/oleshko-g/gophermart/internal/service/errors"
+	"github.com/oleshko-g/gophermart/internal/storage"
+	storageErrors "github.com/oleshko-g/gophermart/internal/storage/errors"
+	"github.com/oleshko-g/gophermart/internal/transport"
 	"goa.design/clue/log"
 	"golang.org/x/sync/errgroup"
 )
@@ -31,7 +31,7 @@ var _ genBalance.Service = (*balanceSvc)(nil)
 var _ genBalance.Auther = (*balanceSvc)(nil)
 
 // New returns the balance service implementation.
-func New(loggingCtx context.Context, storage storage.Balance, auther service.Auther, accrual transport.Accrual) *balanceSvc {
+func New(loggingCtx context.Context, storage storage.Balance, auther service.Auther, accrual transport.Accrual) *balanceSvc { // revive:disable-line:unexported-return provides the interface to the caller
 	log.MustContainLogger(loggingCtx)
 	return &balanceSvc{
 		loggingCtx:             loggingCtx,
@@ -90,11 +90,6 @@ const (
 	OrderStatusProcessing = "PROCESSING"
 	OrderStatusProcessed  = "PROCESSED"
 	OrderStatusInvalid    = "INVALID"
-)
-
-const (
-	TransactionKindAccrual    = "ACCRUAL"
-	TransactionKindWithdrawal = "WITHDRAWAL"
 )
 
 func checkOrderNumber(orderNumber string) error {
@@ -266,8 +261,8 @@ func (s *balanceSvc) GetWithdrawals(ctx context.Context, payload *genBalance.Get
 		t := w.CreatedAt.Format(time.RFC3339)
 
 		resW := genBalance.Withdrawal{
-			Order: (*genBalance.OrderNumber)(&w.Number),
-			Sum: &s,
+			Order:       (*genBalance.OrderNumber)(&w.Number),
+			Sum:         &s,
 			ProcessedAt: &t,
 		}
 

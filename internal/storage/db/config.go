@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
+	storageErrors "github.com/oleshko-g/gophermart/internal/storage/errors"
 )
 
 // Config represents a config of an SQL database
@@ -75,4 +75,5 @@ func (d DriverName) String() string {
 const (
 	DriverNamePostgres   DriverName = "postgres"
 	driverNamePostgreSQL DriverName = "postgresql"
+	PostgresDefaultDSN              = "postgres://localhost:5432/postgres?sslmode=disable"
 )

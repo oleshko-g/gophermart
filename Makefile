@@ -3,7 +3,7 @@
 .PHONY: fmt vet test build gen
 
 gen:
-	goa gen github.com/oleshko-g/oggophermart/api/design -o internal/ 	&& \
+	goa gen github.com/oleshko-g/gophermart/api/design -o internal/ 	&& \
 	sqlc generate && \
 	go generate ./...
 

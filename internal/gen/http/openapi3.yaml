@@ -1,11 +1,34 @@
 openapi: 3.0.3
 info:
     title: Goa API
-    version: "0.2"
+    license:
+        name: Apache 2.0
+        url: https://github.com/oleshko-g/gophermart/blob/dev/LICENSE
+    version: "1.0"
 servers:
     - url: http://localhost:80
       description: Default server for gophermart
 paths:
+    /api/openapi.yaml:
+        get:
+            tags:
+                - docs
+            summary: Download ./internal/gen/http/openapi.yaml
+            description: OpenAPI 2.0
+            operationId: docs#/api/openapi.yaml
+            responses:
+                "200":
+                    description: File downloaded
+    /api/openapi3.yaml:
+        get:
+            tags:
+                - docs
+            summary: Download ./internal/gen/http/openapi3.yaml
+            description: OpenAPI 3.0
+            operationId: docs#/api/openapi3.yaml
+            responses:
+                "200":
+                    description: File downloaded
     /api/user/balance:
         get:
             tags:
@@ -586,5 +609,6 @@ components:
             description: Secures an endpoint by requiring a valid JWT token.
             scheme: bearer
 tags:
+    - name: docs
     - name: balance
     - name: user

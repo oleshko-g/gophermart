@@ -1,3 +1,4 @@
+// Package transport defines [Accrual] interface and type for working with it
 package transport
 
 import (
@@ -25,6 +26,7 @@ type FetchOrderAccrualResult struct {
 	Accrual *float64
 }
 
+// AccrualError is the type to serialize the HTTP response of the Accrual service
 type AccrualError struct {
 	// identifier to map an error to HTTP status codes
 	RetryAfter int
@@ -36,8 +38,10 @@ func (e *AccrualError) Error() string {
 	return e.Message
 }
 
+// OrderAccrualStatus is the type to store known accrual statuses
 type OrderAccrualStatus string
 
+// Known accrual statuses
 const (
 	OrderAccrualStatusRegistered = "REGISTERED"
 	OrderAccrualStatusProcessing = "PROCESSING"

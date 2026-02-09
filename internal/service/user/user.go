@@ -9,11 +9,11 @@ import (
 
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	genSvc "github.com/oleshko-g/oggophermart/internal/gen/service"
-	genUser "github.com/oleshko-g/oggophermart/internal/gen/user"
-	svcErrors "github.com/oleshko-g/oggophermart/internal/service/errors"
-	"github.com/oleshko-g/oggophermart/internal/storage"
-	storageErrors "github.com/oleshko-g/oggophermart/internal/storage/errors"
+	genSvc "github.com/oleshko-g/gophermart/internal/gen/service"
+	genUser "github.com/oleshko-g/gophermart/internal/gen/user"
+	svcErrors "github.com/oleshko-g/gophermart/internal/service/errors"
+	"github.com/oleshko-g/gophermart/internal/storage"
+	storageErrors "github.com/oleshko-g/gophermart/internal/storage/errors"
 	"goa.design/goa/v3/security"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -28,7 +28,7 @@ type userSvc struct {
 var _ genUser.Service = (*userSvc)(nil)
 
 // New returns the user service implementation.
-func New(cfg *Config, storage storage.User) *userSvc {
+func New(cfg *Config, storage storage.User) *userSvc { // revive:disable-line:unexported-return provides the interface to the caller
 	return &userSvc{
 		Config: cfg,
 		User:   storage,
@@ -103,7 +103,7 @@ func checkPasswordHash(hashedPassword, password string) error {
 func signUserJWT(login string, jwtSecret string, expiresIn time.Duration) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.RegisteredClaims{
-			Issuer:    "oggophermart",
+			Issuer:    "gophermart",
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expiresIn)),
 			Subject:   login,

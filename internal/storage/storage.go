@@ -6,24 +6,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	genDBSQL "github.com/oleshko-g/oggophermart/internal/gen/storage/db/sql"
+	genDBSQL "github.com/oleshko-g/gophermart/internal/gen/storage/db/sql"
 )
 
-type Storager interface {
-	User    // interface
-	Balance // interface
-}
-
+// Storage is the struct to hold an implementation of gophermart storage
 type Storage struct {
 	Transacter //interface
 	User       // interface
 	Balance    // interface
 }
 
-type (
-	Order              = genDBSQL.Order
-	BalanceTransaction = genDBSQL.Transaction
-)
+// Order is an alias for [genDBSQL.Order]
+type Order = genDBSQL.Order
 
 // User declares the storage interface for the user service
 type User interface {
@@ -47,16 +41,19 @@ type Balance interface {
 	RetrieveUserWithdrawals(ctx context.Context, userID uuid.UUID) (withdrawals []genDBSQL.SelectBalanceOrderTransactionAmountByUserIDAndKindRow, err error)
 }
 
+// Transaction is the interface that must be met by a storage that supports storage transactions
 type Transaction interface {
 	Commit() error
 	Rollback() error
 }
 
+// Tx is the type returned by [Transacter.BeginTx]
 type Tx struct {
 	Tx Transaction
 	Balance
 }
 
+// Transacter is the interface that must be met by a storage that supported storage transactions
 type Transacter interface {
 	BeginTx(context.Context) (*Tx, error)
 }

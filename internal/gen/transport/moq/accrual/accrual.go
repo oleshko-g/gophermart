@@ -5,7 +5,7 @@ package moqAccrual
 
 import (
 	"context"
-	"github.com/oleshko-g/oggophermart/internal/transport"
+	"github.com/oleshko-g/gophermart/internal/transport"
 	"sync"
 )
 

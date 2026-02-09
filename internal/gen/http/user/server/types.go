@@ -3,12 +3,12 @@
 // user HTTP server types
 //
 // Command:
-// $ goa gen github.com/oleshko-g/oggophermart/api/design -o internal/
+// $ goa gen github.com/oleshko-g/gophermart/api/design -o internal/
 
 package server
 
 import (
-	user "github.com/oleshko-g/oggophermart/internal/gen/user"
+	user "github.com/oleshko-g/gophermart/internal/gen/user"
 	goa "goa.design/goa/v3/pkg"
 )
 

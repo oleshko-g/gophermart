@@ -3,14 +3,14 @@
 // user client
 //
 // Command:
-// $ goa gen github.com/oleshko-g/oggophermart/api/design -o internal/
+// $ goa gen github.com/oleshko-g/gophermart/api/design -o internal/
 
 package user
 
 import (
 	"context"
 
-	service "github.com/oleshko-g/oggophermart/internal/gen/service"
+	service "github.com/oleshko-g/gophermart/internal/gen/service"
 	goa "goa.design/goa/v3/pkg"
 )
 
