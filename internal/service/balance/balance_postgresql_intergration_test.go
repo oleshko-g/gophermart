@@ -30,7 +30,6 @@ func Test_processAccrual(t *testing.T) {
 		ctx := context.Background()
 		err = storageBalance.TearDown(ctx)
 		if err != nil {
-			log.Fatal(err)
 			t.Fatal(err)
 		}
 	})
@@ -43,39 +42,39 @@ func Test_processAccrual(t *testing.T) {
 		transport.FetchOrderAccrualResult
 	}{
 		{
-			name:                   "empty accrual",
-			orderIDString: "019c22a8e94f7d75bcb973b05f070535",
-			orderNumber:    "568082882086285",
+			name:                  "empty accrual",
+			orderIDString:         "019c22a8e94f7d75bcb973b05f070535",
+			orderNumber:           "568082882086285",
 			fetchOrderAccrualFunc: emptyFetchOrderAccrual,
 		},
 		{
-			name: "accrual status INVALID accrual",
-			orderIDString: "019c22a8ea2974ab87a39959d1301bf0",
-			orderNumber: "73568464702",
+			name:                  "accrual status INVALID accrual",
+			orderIDString:         "019c22a8ea2974ab87a39959d1301bf0",
+			orderNumber:           "73568464702",
 			fetchOrderAccrualFunc: invalidFetchOrderAccrualFunc,
 		},
 		{
-			name:  "accrual status REGISTERED",
-			orderIDString: "019c38078bdf7ed4a187d33b193aa2d9",
-			orderNumber: "5441240171117",
+			name:                  "accrual status REGISTERED",
+			orderIDString:         "019c38078bdf7ed4a187d33b193aa2d9",
+			orderNumber:           "5441240171117",
 			fetchOrderAccrualFunc: registeredFetchOrderAccrual,
 		},
 		{
-			name: "accrual status PROCESSING",
-			orderIDString: "019c22a8e55774419eae11fbe458db69",
-			orderNumber: "167862623743756",
+			name:                  "accrual status PROCESSING",
+			orderIDString:         "019c22a8e55774419eae11fbe458db69",
+			orderNumber:           "167862623743756",
 			fetchOrderAccrualFunc: processingFetchOrderAccrual,
 		},
 		{
-			name: "accrual status PROCESSED no accrual",
-			orderIDString: "019c27b58f537dcb8aa9fd9ca0d61f93",
-			orderNumber: "860548181160",
+			name:                  "accrual status PROCESSED no accrual",
+			orderIDString:         "019c27b58f537dcb8aa9fd9ca0d61f93",
+			orderNumber:           "860548181160",
 			fetchOrderAccrualFunc: processedNoAccrualFetchOrderAccrual,
 		},
 		{
-			name: "accrual status PROCESSED with accrual",
-			orderIDString: "019c380787e87a77b9f8d392ab5797df",
-			orderNumber: "2402188500348",
+			name:                  "accrual status PROCESSED with accrual",
+			orderIDString:         "019c380787e87a77b9f8d392ab5797df",
+			orderNumber:           "2402188500348",
 			fetchOrderAccrualFunc: processedFetchOrderAccrual,
 		},
 	}
@@ -128,11 +127,11 @@ func newTestStorage(testName string) (*sql.Storage, error) {
 
 type fetchOrderAccrualFunc func(context.Context, transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error)
 
-func emptyFetchOrderAccrual(ctx context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
+func emptyFetchOrderAccrual(_ context.Context, _ transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
 	return nil, nil
 }
 
-func invalidFetchOrderAccrualFunc(ctx context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
+func invalidFetchOrderAccrualFunc(_ context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
 	return &transport.FetchOrderAccrualResult{
 		Order:   payload.Number,
 		Status:  transport.OrderAccrualStatusInvalid,
@@ -140,7 +139,7 @@ func invalidFetchOrderAccrualFunc(ctx context.Context, payload transport.FetchOr
 	}, nil
 }
 
-func registeredFetchOrderAccrual(ctx context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
+func registeredFetchOrderAccrual(_ context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
 	return &transport.FetchOrderAccrualResult{
 		Order:   payload.Number,
 		Status:  transport.OrderAccrualStatusRegistered,
@@ -148,7 +147,7 @@ func registeredFetchOrderAccrual(ctx context.Context, payload transport.FetchOrd
 	}, nil
 }
 
-func processingFetchOrderAccrual(ctx context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
+func processingFetchOrderAccrual(_ context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
 	return &transport.FetchOrderAccrualResult{
 		Order:   payload.Number,
 		Status:  transport.OrderAccrualStatusProcessing,
@@ -156,7 +155,7 @@ func processingFetchOrderAccrual(ctx context.Context, payload transport.FetchOrd
 	}, nil
 }
 
-func processedNoAccrualFetchOrderAccrual(ctx context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
+func processedNoAccrualFetchOrderAccrual(_ context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
 	return &transport.FetchOrderAccrualResult{
 		Order:   payload.Number,
 		Status:  transport.OrderAccrualStatusProcessed,
@@ -164,7 +163,7 @@ func processedNoAccrualFetchOrderAccrual(ctx context.Context, payload transport.
 	}, nil
 }
 
-func processedFetchOrderAccrual(ctx context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
+func processedFetchOrderAccrual(_ context.Context, payload transport.FetchOrderAccrualPayload) (*transport.FetchOrderAccrualResult, error) {
 	accrual := float64(729.98)
 	return &transport.FetchOrderAccrualResult{
 		Order:   payload.Number,

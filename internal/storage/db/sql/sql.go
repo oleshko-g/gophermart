@@ -68,11 +68,6 @@ func (s *Storage) Exec(ctx context.Context, stmt string) error {
 	return err
 }
 
-// RetrieveUserBalance retrieves current user's balance and the amount withdrawn by their userID or an error
-func (s *Storage) RetrieveUserBalance(ctx context.Context, userID uuid.UUID) (currentBalance, withdrawn int, err error) {
-	return 0, 0, nil
-}
-
 // RetrieveUser retrieves a user id by their login
 func (s *Storage) RetrieveUser(ctx context.Context, login string) (userID uuid.UUID, err error) {
 	userID, err = s.queries.SelectUserIDByLogin(ctx, login)
@@ -94,7 +89,7 @@ func (s *Storage) StoreUser(ctx context.Context, login, hashedPassword string) (
 			goto newUser
 		}
 		return err
-	} else {
+	} else { // revive:disable-line:indent-error-flow may be refactored
 		return storageErrors.ErrAlreadyExists
 	}
 
@@ -125,6 +120,7 @@ newUser:
 	return nil
 }
 
+// StoreOrder stores the user's order or returns an error
 func (s *Storage) StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber, orderStatus string, createdAt time.Time) (orderID uuid.UUID, err error) {
 
 	newOrderID, err := uuid.NewV7()
@@ -154,11 +150,8 @@ func (s *Storage) StoreOrder(ctx context.Context, userID uuid.UUID, orderNumber,
 
 	return newOrderID, nil
 }
-func (s *Storage) RetreiveOrder(ctx context.Context, userID uuid.UUID, orderNumber string) error {
-	// s.queries.Se
-	return nil
-}
 
+// RetreiveUserPassword retrieves the user's hashed password or returns an error
 func (s *Storage) RetreiveUserPassword(ctx context.Context, login string) (hashedPassword string, err error) {
 	hashedPassword, err = s.queries.SelectUserHashedPasswordByLogin(ctx, login)
 	if err != nil {
@@ -170,6 +163,7 @@ func (s *Storage) RetreiveUserPassword(ctx context.Context, login string) (hashe
 	return hashedPassword, nil
 }
 
+// RetreiveOrderUser retrieves the user ID of the order or returns an error
 func (s *Storage) RetreiveOrderUser(ctx context.Context, orderNumber string) (userID uuid.UUID, err error) {
 	userID, err = s.queries.SelectUserIDByOrderNumber(ctx, orderNumber)
 	if err != nil {
@@ -182,6 +176,7 @@ func (s *Storage) RetreiveOrderUser(ctx context.Context, orderNumber string) (us
 	return userID, nil
 }
 
+// RetrieaveUserOrders user's orders or returns an error
 func (s *Storage) RetrieaveUserOrders(ctx context.Context, userID uuid.UUID) (userOrders []genDBSQL.SelectOrdersByUserIDRow, err error) {
 	rows, err := s.queries.SelectOrdersByUserID(ctx, userID)
 	if err != nil {
@@ -204,6 +199,7 @@ func (s *Storage) Retrieve(ctx context.Context, userID uuid.UUID) (genDBSQL.Sele
 	return userBalance, nil
 }
 
+// RetrieveOrderIDsForAccrual retrieves unprocessed orders IDs for checking their accrual status or returns an error
 func (s *Storage) RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, error) {
 	statuses := []string{schema.OrderStatusNew, schema.OrderStatusProcessing}
 
@@ -215,7 +211,7 @@ func (s *Storage) RetrieveOrderIDsForAccrual(ctx context.Context) ([]uuid.UUID, 
 	return orderIDs, nil
 }
 
-// StoreUserWithdrawal stores an accrual user transaction
+// RetrieveOrderForAccrual retrieves the order data by its id or returns
 func (s *Storage) RetrieveOrderForAccrual(ctx context.Context, orderID uuid.UUID) (storage.Order, error) {
 
 	order, err := s.queries.SelectOrder(ctx, orderID)
@@ -226,6 +222,7 @@ func (s *Storage) RetrieveOrderForAccrual(ctx context.Context, orderID uuid.UUID
 	return order, nil
 }
 
+// UpdateOrderStatus updates user's order status or returns an error
 func (s *Storage) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error {
 	err := s.queries.UpdateOrderStatus(ctx, genDBSQL.UpdateOrderStatusParams{ID: orderID, Status: status})
 	if err != nil {
@@ -234,6 +231,7 @@ func (s *Storage) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, stat
 	return nil
 }
 
+// StoreUserAccrual stores an accrual balance transaction or returns an error
 func (s *Storage) StoreUserAccrual(ctx context.Context, userID uuid.UUID, orderID uuid.UUID, amount int32) error {
 	newTransactionID, err := uuid.NewV7()
 	if err != nil {
@@ -277,6 +275,7 @@ func (s *Storage) StoreUserWithdrawal(ctx context.Context, userID uuid.UUID, ord
 	return newTransactionID, nil
 }
 
+// RetrieveUserWithdrawals retrieves user's withdrawals or returns an error
 func (s *Storage) RetrieveUserWithdrawals(ctx context.Context, userID uuid.UUID) (withdrawals []genDBSQL.SelectBalanceOrderTransactionAmountByUserIDAndKindRow, err error) {
 	withdrawals, err = s.queries.SelectBalanceOrderTransactionAmountByUserIDAndKind(ctx, genDBSQL.SelectBalanceOrderTransactionAmountByUserIDAndKindParams{
 		UserID: userID,
@@ -291,11 +290,6 @@ func (s *Storage) RetrieveUserWithdrawals(ctx context.Context, userID uuid.UUID)
 	}
 
 	return withdrawals, nil
-}
-
-type Tx struct {
-	*storage.Tx
-	*storage.Storage
 }
 
 // BeginTx is the implementation of [storage.Transacter]. It wraps [database/sql.BeginTx]
@@ -318,7 +312,7 @@ func (s *Storage) BeginTx(ctx context.Context) (*storage.Tx, error) {
 
 func newDB(cfg db.Config) (*sql.DB, error) {
 	ctx := context.Background()
-	connector, err := newPostgresConnector(ctx)
+	connector, err := newPostgresConnector()
 	if err != nil {
 		return nil, err
 	}
@@ -329,6 +323,7 @@ func newDB(cfg db.Config) (*sql.DB, error) {
 	return sql.Open(string(cfg.DriverName), cfg.DSN().String())
 }
 
+// TearDown closes the underlying [*sql.DB] and drops it or returns an error
 func (s *Storage) TearDown(ctx context.Context) error {
 	err := s.db.Close()
 	if err != nil {
@@ -345,7 +340,7 @@ func (s *Storage) TearDown(ctx context.Context) error {
 
 func dropDB(ctx context.Context, dbName string) error {
 
-	connector, err := newPostgresConnector(ctx)
+	connector, err := newPostgresConnector()
 	if err != nil {
 		return err
 	}
@@ -377,7 +372,7 @@ func createDB(ctx context.Context, conn driver.Connector, dbName string) error {
 	return nil
 }
 
-func newPostgresConnector(ctx context.Context) (driver.Connector, error) {
+func newPostgresConnector() (driver.Connector, error) {
 	connecter, err := pgDriver.NewConnector(db.PostgresDefaultDSN)
 	if err != nil {
 		return nil, err

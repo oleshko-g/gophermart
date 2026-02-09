@@ -20,7 +20,4 @@ var (
 
 	// ErrNotFound is returned when a storage record is not found
 	ErrNotFound = errors.New("not found")
-
-	// ErrFailedWithTx
-	ErrFailedWithTx = errors.New("failed storage.WithTx")
 )

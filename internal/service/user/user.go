@@ -28,7 +28,7 @@ type userSvc struct {
 var _ genUser.Service = (*userSvc)(nil)
 
 // New returns the user service implementation.
-func New(cfg *Config, storage storage.User) *userSvc {
+func New(cfg *Config, storage storage.User) *userSvc { // revive:disable-line:unexported-return provides the interface to the caller
 	return &userSvc{
 		Config: cfg,
 		User:   storage,

@@ -18,6 +18,8 @@ import (
 	goahttp "goa.design/goa/v3/http"
 )
 
+
+// Server is the interface to meet by [*http.Server]
 type Server interface {
 	ListenAndServe() error
 	Shutdown(context.Context) error
@@ -61,6 +63,7 @@ func newHandlers(loggingCtx context.Context, balanceEndpoints *genBalance.Endpoi
 
 }
 
+// NewServer mounts gophermart services on the [*http.Server] and returns [Server]
 func NewServer(loggingCtx context.Context, cfg Config, svc service.Service) Server {
 	var (
 		balanceEndpoints *genBalance.Endpoints
@@ -85,7 +88,7 @@ func NewServer(loggingCtx context.Context, cfg Config, svc service.Service) Serv
 }
 
 // errorHandler is the handler which is called when ther was an HTTP response encoding error
-func errorHandler(ctx context.Context, res http.ResponseWriter, err error) {
+func errorHandler(_ context.Context, res http.ResponseWriter, err error) {
 	if res == nil {
 		err = fmt.Errorf("%w: %s", errResponseWithError, errors.New("nil responseWriter"))
 		slog.Error(err.Error())

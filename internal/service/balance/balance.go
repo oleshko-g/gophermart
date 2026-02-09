@@ -31,7 +31,7 @@ var _ genBalance.Service = (*balanceSvc)(nil)
 var _ genBalance.Auther = (*balanceSvc)(nil)
 
 // New returns the balance service implementation.
-func New(loggingCtx context.Context, storage storage.Balance, auther service.Auther, accrual transport.Accrual) *balanceSvc {
+func New(loggingCtx context.Context, storage storage.Balance, auther service.Auther, accrual transport.Accrual) *balanceSvc { // revive:disable-line:unexported-return provides the interface to the caller
 	log.MustContainLogger(loggingCtx)
 	return &balanceSvc{
 		loggingCtx:             loggingCtx,
@@ -90,11 +90,6 @@ const (
 	OrderStatusProcessing = "PROCESSING"
 	OrderStatusProcessed  = "PROCESSED"
 	OrderStatusInvalid    = "INVALID"
-)
-
-const (
-	TransactionKindAccrual    = "ACCRUAL"
-	TransactionKindWithdrawal = "WITHDRAWAL"
 )
 
 func checkOrderNumber(orderNumber string) error {
@@ -266,8 +261,8 @@ func (s *balanceSvc) GetWithdrawals(ctx context.Context, payload *genBalance.Get
 		t := w.CreatedAt.Format(time.RFC3339)
 
 		resW := genBalance.Withdrawal{
-			Order: (*genBalance.OrderNumber)(&w.Number),
-			Sum: &s,
+			Order:       (*genBalance.OrderNumber)(&w.Number),
+			Sum:         &s,
 			ProcessedAt: &t,
 		}
 

@@ -1,3 +1,4 @@
+// Package accrual implements an HTTP client for the accrual service
 package accrual
 
 import (
@@ -9,7 +10,6 @@ import (
 	"strconv"
 
 	"github.com/oleshko-g/gophermart/internal/transport"
-	_ "goa.design/clue/log"
 
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"

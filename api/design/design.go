@@ -1,6 +1,7 @@
+// Package design is the gophermart goa API design
 package design
 
-import . "goa.design/goa/v3/dsl"
+import . "goa.design/goa/v3/dsl" // revive:disable-line:dot-imports goa recommends to dot import the DSL
 
 var _ = API("gophermart", func() {
 	// INFO: Gophermart
@@ -27,15 +28,15 @@ var _ = Service("docs", func() {
 
 var _ = Service("user", func() {
 	// INFO:  User service
-	Error("Invalid input parameter", ErrorType)
-	Error("User is not authenticated", ErrorType)
-	Error("Internal service error", ErrorType)
+	Error("Invalid input parameter", errorType)
+	Error("User is not authenticated", errorType)
+	Error("Internal service error", errorType)
 
 	// INFO:    Register
 	Method("register", func() {
-		Payload(LoginPassword)
-		Result(JWTToken)
-		Error("Login is taken already", ErrorType)
+		Payload(loginPassword)
+		Result(_JWTToken)
+		Error("Login is taken already", errorType)
 		HTTP(func() {
 			POST("/user/register")
 			Response(StatusOK, func() {
@@ -57,8 +58,8 @@ var _ = Service("user", func() {
 	})
 	// INFO:    Login
 	Method("login", func() {
-		Payload(LoginPassword)
-		Result(JWTToken)
+		Payload(loginPassword)
+		Result(_JWTToken)
 		HTTP(func() {
 			POST("/user/login")
 			Response(StatusOK, func() {
@@ -80,11 +81,11 @@ var _ = Service("user", func() {
 })
 var _ = Service("balance", func() {
 	// INFO:  Balance Service
-	Security(JWTAuth)
-	Error("Invalid input parameter", ErrorType)
-	Error("User is not authenticated", ErrorType)
-	Error("Internal service error", ErrorType)
-	Error("Not implemented", ErrorType)
+	Security(_JWTAuth)
+	Error("Invalid input parameter", errorType)
+	Error("User is not authenticated", errorType)
+	Error("Internal service error", errorType)
+	Error("Not implemented", errorType)
 	Error("missing_field")
 	HTTP(func() {
 		Header("Authorization", func() {
@@ -118,8 +119,8 @@ var _ = Service("balance", func() {
 			})
 			Required("Authorization", "OrderNumber")
 		})
-		Error("The order belongs to another user", ErrorType)
-		Error("Invalid order number", ErrorType)
+		Error("The order belongs to another user", errorType)
+		Error("Invalid order number", errorType)
 		HTTP(func() {
 			POST("/user/orders")
 			Body("OrderNumber", func() {
@@ -172,7 +173,7 @@ var _ = Service("balance", func() {
 			Required("Authorization")
 		})
 		Result(func() {
-			Attribute("orders", ArrayOf(Order), func() {
+			Attribute("orders", ArrayOf(order), func() {
 				Example(func() {
 					Value([]Val{
 						{
@@ -287,8 +288,8 @@ var _ = Service("balance", func() {
 					})
 			})
 		})
-		Error("Insufficient funds", ErrorType)
-		Error("Invalid order number", ErrorType)
+		Error("Insufficient funds", errorType)
+		Error("Invalid order number", errorType)
 		HTTP(func() {
 			POST("/user/balance/withdraw")
 			Response(StatusOK, func() {
@@ -325,7 +326,7 @@ var _ = Service("balance", func() {
 			Required("Authorization")
 		})
 		Result(func() {
-			Attribute("withdrawals", ArrayOf(Withdrawal))
+			Attribute("withdrawals", ArrayOf(withdrawal))
 			Attribute("NoResult")
 		})
 		HTTP(func() {
@@ -359,7 +360,7 @@ var _ = Service("balance", func() {
 	})
 })
 
-var UploadUserOrderResult = Type("PostOrderResult", func() {
+var uploadUserOrderResult = Type("PostOrderResult", func() {
 	Attribute("accepted", func() {
 		Meta("struct:tag:json", "-")
 		Meta("openapi:generate", "false")
@@ -368,7 +369,7 @@ var UploadUserOrderResult = Type("PostOrderResult", func() {
 	Meta("openapi:example", "false")
 })
 
-var LoginPassword = Type("LoginPassword", func() {
+var loginPassword = Type("LoginPassword", func() {
 	Attribute("login", String)
 	Attribute("password", String)
 	Required("login", "password")
@@ -380,7 +381,7 @@ var LoginPassword = Type("LoginPassword", func() {
 	})
 })
 
-var ErrorType = Type("GophermartError", func() {
+var errorType = Type("GophermartError", func() {
 	ErrorName("name", func() {
 		Description("identifier to map an error to HTTP status codes")
 		Meta("struct:tag:json", "-")
@@ -393,11 +394,11 @@ var ErrorType = Type("GophermartError", func() {
 	Meta("struct:pkg:path", "service")
 })
 
-var JWTAuth = JWTSecurity("jwt", func() {
+var _JWTAuth = JWTSecurity("jwt", func() {
 	Description("Secures an endpoint by requiring a valid JWT token.")
 })
 
-var JWTToken = Type("JWTToken", func() {
+var _JWTToken = Type("JWTToken", func() {
 	Token("authToken", String, func() {
 		Description("A JWT token used to authenticate a request")
 		Example(func() {
@@ -408,7 +409,7 @@ var JWTToken = Type("JWTToken", func() {
 	Meta("struct:pkg:path", "service")
 })
 
-var Order = Type("Order", func() {
+var order = Type("Order", func() {
 	Attribute("number", String, func() {
 		Pattern("[1-9][0-9]*")
 	})
@@ -424,24 +425,17 @@ var Order = Type("Order", func() {
 	Required("number", "status", "uploaded_at")
 })
 
-var OrderNumber = Type("OrderNumber", String, func() {
+var orderNumber = Type("OrderNumber", String, func() {
 	Description("Unique user order number")
 	Pattern("[1-9][0-9]*")
 })
 
-var Withdrawal = Type("Withdrawal", func() {
-	Attribute("order", OrderNumber)
+var withdrawal = Type("Withdrawal", func() {
+	Attribute("order", orderNumber)
 	Attribute("sum", Float64, func() {
 		ExclusiveMinimum(0)
 	})
 	Attribute("processed_at", String, func() {
 		Format(FormatDateTime)
 	})
-})
-
-var NoResult = Type("NoResult", String, func() {
-	Meta("struct:tag:json", "-")
-	Meta("openapi:generate", "false")
-	Meta("openapi:example", "false")
-	Meta("struct:field:type", "string")
 })

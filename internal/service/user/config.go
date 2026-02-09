@@ -1,5 +1,6 @@
 package user
 
+// Config store the config of [user.Service]
 type Config struct {
 	secretKey secret
 }
@@ -15,6 +16,7 @@ func (sec secret) String() string {
 	return ""
 }
 
+// Set sets the value of a [*secret]
 func (sec *secret) Set(s string) error {
 	*sec = secret(s)
 	return nil

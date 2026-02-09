@@ -28,6 +28,7 @@ func PostgresUp(database *sql.DB) error {
 	return nil
 }
 
+// gophermart accrual statuses
 const (
 	OrderStatusNew        = "NEW"
 	OrderStatusProcessing = "PROCESSING"
@@ -35,6 +36,7 @@ const (
 	OrderStatusInvalid    = "INVALID"
 )
 
+// gophermart kinds of balance transactions
 const (
 	TransactionKindAccrual    = "ACCRUAL"
 	TransactionKindWithdrawal = "WITHDRAWAL"

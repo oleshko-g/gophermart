@@ -1,3 +1,4 @@
+// Package oglog is a helper logging package
 package oglog
 
 import (
@@ -6,7 +7,7 @@ import (
 	"goa.design/clue/log"
 )
 
-// newLoggingCtx returns the context with goa logger
+// NewLoggingCtx returns the context with goa logger
 func NewLoggingCtx() context.Context {
 	ctx := context.Background()
 
